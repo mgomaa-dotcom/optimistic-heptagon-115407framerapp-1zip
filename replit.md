@@ -10,7 +10,9 @@ Use the **Start application** workflow. It runs:
 python3 server.py
 ```
 
-Open the Replit web preview to view the site. Python's standard library is sufficient; no package installation is required. The consultation form requires the `BITRIX24_WEBHOOK_URL` and `REST_COUNTRY_TOKEN` secrets, which must remain server-side. Do not switch back to a static-only server: it cannot submit the form.
+Open the Replit web preview to view the site. The consultation form requires the `BITRIX24_WEBHOOK_URL` and `REST_COUNTRY_TOKEN` secrets, which must remain server-side. Do not switch back to a static-only server: it cannot submit the form. PostgreSQL and App Storage dependencies are declared in `pyproject.toml`.
+
+Publishing uses `python3 server.py` as its run command. Choose the desired publishing target in the Publishing pane; the project config intentionally does not override it.
 
 Do not open `index.html` through a `file://` URL: JavaScript modules and the form API require HTTP. Public file serving is restricted to website assets; credentials, backend sources, and the imported archive are not served.
 
@@ -35,10 +37,12 @@ Submissions create a company, then a linked contact, then a lead linked to both.
 
 REST Countries is paginated server-side and cached for 24 hours. Both secrets are used only in server-side outbound requests.
 
-`.local/booking-state.sqlite3` stores submission keys, payload hashes, and created CRM IDs, not form contents. It prevents duplicate writes on retries and tracks partially completed submissions. If a remote write times out, do not automatically retry that stage: it may have succeeded. Check Bitrix before retrying. This file must remain private and out of Git. For production, use persistent storage or a managed database before relying on idempotency across instances or redeployments.
+The managed PostgreSQL table `booking_submissions` stores only idempotency keys, payload hashes, created CRM IDs, pending stages, and timestamps—not form contents. PostgreSQL row locks and a committed pending-stage claim prevent concurrent app instances from repeating CRM writes. If a remote write times out, do not automatically retry that stage: it may have succeeded.
+
+The three existing completed retry records were copied from `.local/booking-state.sqlite3` into development PostgreSQL and verified; the SQLite file remains untouched and private. `python3 -m backend.migrate_booking_state` safely verifies or copies metadata again, refusing conflicting rows. The app does not create the production schema at startup: Replit Publish applies the development database schema to production. Confirm the `booking_submissions` table is present in development before publishing.
 
 ## Form checks
-Run backend checks with `python3 -m unittest discover -s tests -v`. They use fake providers and do not create CRM records. `tests/browser_form_check.py` exercises the live form in a local headless Chromium debugging session on port 9222; its submission responses are deliberately stubbed. Live CRM creation requires a separately approved, clearly labeled test submission.
+Run backend checks with `python3 -m unittest discover -s tests -v`. They use fake providers and do not create CRM records. PostgreSQL integration tests use temporary UUIDs and remove only their own rows. `tests/browser_form_check.py` exercises the live form in a local headless Chromium debugging session on port 9222; its submission responses are deliberately stubbed. Live CRM creation requires a separately approved, clearly labeled test submission.
 
 ## Consultation thank-you page
 

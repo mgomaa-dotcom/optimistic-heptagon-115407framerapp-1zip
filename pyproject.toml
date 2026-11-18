@@ -4,5 +4,6 @@ version = "0.1.0"
 description = "Mastery Academy website"
 requires-python = ">=3.13"
 dependencies = [
+    "psycopg[binary]>=3.2,<4",
     "replit-object-storage>=1.0.2,<2",
 ]

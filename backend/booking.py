@@ -3,14 +3,15 @@
 import hashlib
 import json
 import re
-import sqlite3
 import threading
 import time
 import uuid
 import unicodedata
-from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
+from .booking_state import (
+    BookingStateStore, DeliveryUncertainError, SubmissionConflictError,
+)
 from .providers import Bitrix, Countries, ProviderError
 
 
@@ -162,20 +163,10 @@ class Booking:
     def __init__(self, state_path=None, *, bitrix=None, countries=None):
         self.bitrix = bitrix or Bitrix()
         self.countries = countries or Countries()
-        self.state_path = Path(state_path or ".local/booking-state.sqlite3")
-        self.state_path.parent.mkdir(parents=True, exist_ok=True)
+        self.state = BookingStateStore(state_path)
         self._lock = threading.Lock()
         self._options = None
         self._options_expiry = 0
-        with self.connect() as db:
-            db.execute("""CREATE TABLE IF NOT EXISTS submissions (
-                key TEXT PRIMARY KEY, digest TEXT NOT NULL,
-                company_id INTEGER, contact_id INTEGER, lead_id INTEGER,
-                pending_stage TEXT, created_at REAL NOT NULL
-            )""")
-
-    def connect(self):
-        return sqlite3.connect(self.state_path, timeout=30)
 
     def employee_options(self):
         if self._options is not None and self._options_expiry > time.monotonic():
@@ -209,34 +200,22 @@ class Booking:
             data, sales_field, self.bitrix.fields("company"), self.bitrix.fields("lead"),
         )
         digest = hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
-        with self._lock, self.connect() as db:
-            row = db.execute(
-                "SELECT digest, company_id, contact_id, lead_id, pending_stage "
-                "FROM submissions WHERE key = ?", (key,),
-            ).fetchone()
-            if row:
-                if row[0] != digest:
-                    raise SubmissionConflict()
-                if row[4]:
-                    # A timed-out or interrupted write may already exist in the CRM.
-                    raise DeliveryUncertain()
-                if row[3]:
+        with self._lock:
+            while True:
+                try:
+                    entity, ids = self.state.claim_next_stage(key, digest)
+                except SubmissionConflictError:
+                    raise SubmissionConflict() from None
+                except DeliveryUncertainError:
+                    # Another instance may still be writing this CRM stage.
+                    raise DeliveryUncertain() from None
+                if entity is None:
                     return {"ok": True}
-            else:
-                db.execute("INSERT INTO submissions(key,digest,created_at) VALUES(?,?,?)",
-                           (key, digest, time.time()))
-                db.commit()
-                row = (digest, None, None, None, None)
-            ids = {"company": row[1], "contact": row[2], "lead": row[3]}
-            for entity, fields in zip(("company", "contact", "lead"), records):
-                if ids[entity]:
-                    continue
+                fields = records[("company", "contact", "lead").index(entity)]
                 if entity in ("contact", "lead"):
                     fields["COMPANY_ID"] = ids["company"]
                 if entity == "lead":
                     fields["CONTACT_ID"] = ids["contact"]
-                db.execute("UPDATE submissions SET pending_stage=? WHERE key=?", (entity, key))
-                db.commit()
                 try:
                     record_id = self.bitrix.call(
                         f"crm.{entity}.add",
@@ -246,12 +225,9 @@ class Booking:
                         raise ProviderError("bitrix", uncertain=True, code="invalid_record_id")
                 except ProviderError as error:
                     if not error.uncertain:
-                        db.execute("UPDATE submissions SET pending_stage=NULL WHERE key=?", (key,))
-                        db.commit()
+                        self.state.clear_pending(key, entity)
                     raise
-                ids[entity] = int(record_id)
-                # Column name comes from the fixed tuple above, never from user input.
-                db.execute(f"UPDATE submissions SET {entity}_id=?, pending_stage=NULL WHERE key=?",
-                           (ids[entity], key))
-                db.commit()
-            return {"ok": True}
+                try:
+                    self.state.complete_stage(key, entity, int(record_id))
+                except DeliveryUncertainError:
+                    raise DeliveryUncertain() from None

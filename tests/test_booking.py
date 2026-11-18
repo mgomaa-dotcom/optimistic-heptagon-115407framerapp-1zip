@@ -1,8 +1,12 @@
 import tempfile
 import unittest
 import uuid
+import os
+import threading
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
+import psycopg
 from backend.booking import (
     Booking, DeliveryUncertain, SubmissionConflict, ValidationError,
     build_records, validate,
@@ -191,6 +195,78 @@ class SubmissionTests(unittest.TestCase):
         with self.assertRaises(DeliveryUncertain):
             self.service.submit(VALID, self.key)
         self.assertEqual(len(self.bitrix.writes), 1)
+
+
+@unittest.skipUnless(os.environ.get("DATABASE_URL"), "managed database is unavailable")
+class PostgresSubmissionTests(unittest.TestCase):
+    """Use only fixture Bitrix clients; every random test row is removed afterward."""
+
+    def setUp(self):
+        self.key = str(uuid.uuid4())
+        self.bitrix = FakeBitrix()
+
+    def tearDown(self):
+        with psycopg.connect(os.environ["DATABASE_URL"], connect_timeout=10) as db:
+            db.execute(
+                "DELETE FROM booking_submissions WHERE idempotency_key = %s",
+                (self.key,),
+            )
+
+    def service(self, bitrix=None):
+        return Booking(bitrix=bitrix or self.bitrix, countries=FakeCountries())
+
+    def test_success_survives_a_new_service_instance(self):
+        self.assertEqual(self.service().submit(VALID, self.key), {"ok": True})
+        second_bitrix = FakeBitrix()
+        self.assertEqual(self.service(second_bitrix).submit(VALID, self.key), {"ok": True})
+        self.assertEqual(len(self.bitrix.writes), 3)
+        self.assertEqual(second_bitrix.writes, [])
+
+    def test_partial_definitive_failure_resumes_missing_stage(self):
+        self.bitrix.fail_entity = "contact"
+        with self.assertRaises(ProviderError):
+            self.service().submit(VALID, self.key)
+        self.bitrix.fail_entity = None
+        self.assertEqual(self.service().submit(VALID, self.key), {"ok": True})
+        self.assertEqual(
+            [method for method, _ in self.bitrix.writes],
+            ["crm.company.add", "crm.contact.add", "crm.lead.add"],
+        )
+
+    def test_uncertain_delivery_is_not_replayed_by_another_instance(self):
+        self.bitrix.fail_entity = "company"
+        self.bitrix.uncertain = True
+        with self.assertRaises(ProviderError):
+            self.service().submit(VALID, self.key)
+        with self.assertRaises(DeliveryUncertain):
+            self.service(FakeBitrix()).submit(VALID, self.key)
+        self.assertEqual(self.bitrix.writes, [])
+
+    def test_concurrent_instances_claim_a_crm_stage_only_once(self):
+        started = threading.Event()
+        release = threading.Event()
+
+        class BlockingBitrix(FakeBitrix):
+            def call(inner_self, method, payload):
+                if method == "crm.company.add":
+                    started.set()
+                    if not release.wait(10):
+                        raise AssertionError("fixture gate timed out")
+                return super(BlockingBitrix, inner_self).call(method, payload)
+
+        first_bitrix = BlockingBitrix()
+        first = self.service(first_bitrix)
+        second = self.service(FakeBitrix())
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first_request = pool.submit(first.submit, VALID, self.key)
+            self.assertTrue(started.wait(10), "first CRM call did not start")
+            second_request = pool.submit(second.submit, VALID, self.key)
+            with self.assertRaises(DeliveryUncertain):
+                second_request.result(timeout=10)
+            release.set()
+            self.assertEqual(first_request.result(timeout=10), {"ok": True})
+        self.assertEqual(len(first_bitrix.writes), 3)
+        self.assertEqual(second.bitrix.writes, [])
 
 
 if __name__ == "__main__":

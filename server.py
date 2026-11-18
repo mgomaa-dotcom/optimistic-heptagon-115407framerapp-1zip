@@ -18,7 +18,7 @@ STATIC_FILES = {
     "index.html", "styles.css", "hero-image.css", "booking-form.js",
     "booking-form.css", "country-picker.js", "thank-you.html",
 }
-booking = Booking(ROOT / ".local/booking-state.sqlite3")
+booking = None
 attempts = defaultdict(deque)
 attempt_lock = threading.Lock()
 
@@ -149,5 +149,7 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     mimetypes.add_type("image/avif", ".avif")
+    # Validate the managed database/schema before opening the HTTP port.
+    booking = Booking()
     print("Mastery website listening on port 5000", flush=True)
     ThreadingHTTPServer(("0.0.0.0", 5000), Handler).serve_forever()
