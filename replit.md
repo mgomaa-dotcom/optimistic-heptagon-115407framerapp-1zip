@@ -40,5 +40,10 @@ REST Countries is paginated server-side and cached for 24 hours. Both secrets ar
 ## Form checks
 Run backend checks with `python3 -m unittest discover -s tests -v`. They use fake providers and do not create CRM records. `tests/browser_form_check.py` exercises the live form in a local headless Chromium debugging session on port 9222; its submission responses are deliberately stubbed. Live CRM creation requires a separately approved, clearly labeled test submission.
 
+## Homepage motion
+`assets/js/learning-enhancements.js` progressively enhances the sitemap, sales tracks, and methodology without rewriting the exported Framer bundle. `assets/css/learning-enhancements.css` scopes the layout changes to those sections. GSAP 3.13.0 is served locally from `assets/vendor/gsap.min.js`, with its license header retained.
+
+The sitemap advances every 4.8 seconds and tracks every 4.5 seconds when visible. Both have manual selection and pause controls and pause during hover, focus, hidden tabs, and reduced-motion preferences. Methodology retains its existing before/after tabs and content in wider numbered stages. `python3 tests/browser_motion_check.py` exercises motion, manual synchronization, mobile sizing, both methodology phases, and reduced motion using the same Chromium debugging session as the form checks; it never submits CRM data.
+
 ## Preview verification
 The homepage rendered at desktop and mobile sizes, the proxied preview returned HTTP 200, and all directly referenced local files were present. The imported Framer runtime reports a recoverable React hydration warning, and Framer blocks its embedded editor on other domains. These export limitations were left unchanged to preserve the imported site; interactive flows have not been comprehensively tested.

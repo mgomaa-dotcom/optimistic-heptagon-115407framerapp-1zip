@@ -1,1 +1,2 @@
 - [Country API quirks](country-api.md) — REST Countries v5 needs an explicit client User-Agent and includes countries without ISO codes.
+- [Framer enhancement lifecycle](framer-enhancements.md) — hydration can replace entire sections; reconnect enhancements and keep observer writes idempotent.
