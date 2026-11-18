@@ -1,0 +1,4 @@
+/* Replace only the exported hero artwork; leave shared testimonial images intact. */
+.framer-1clr2fg img {
+  content: url("assets/images/hero-sales-team.webp");
+}
