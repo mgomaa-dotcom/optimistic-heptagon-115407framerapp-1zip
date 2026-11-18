@@ -106,6 +106,8 @@ if __name__ == "__main__":
       const host = document.querySelector('mastery-booking-form');
       const form = host.form, root = host.shadowRoot;
       const assert = (condition, label) => { if (!condition) throw Error(label); };
+      assert(root.querySelectorAll('.form-field').length === 8, 'field grouping missing');
+      assert(getComputedStyle(form).gridTemplateColumns.split(' ').length === 1, 'phone layout must use one column');
       assert(document.querySelectorAll('mastery-booking-form').length === 1, 'duplicate form');
       assert(getComputedStyle(document.querySelector('form[data-framer-name="Booking Form"]')).display === 'none', 'old form visible');
       assert(host.countryPicker.countries.length > 250, 'country pagination incomplete');
@@ -202,6 +204,26 @@ if __name__ == "__main__":
         mobileWidth:host.getBoundingClientRect().width,submissionTransport:'stubbed; no CRM writes'};
     })()""")
     print(json.dumps(result, ensure_ascii=False))
+    for width in (768, 1024, 1440):
+        browser.call("Emulation.setDeviceMetricsOverride", {
+            "width": width, "height": 1000, "deviceScaleFactor": 1, "mobile": False,
+        })
+        time.sleep(.3)
+        layout = browser.evaluate("""(() => {
+          const host = document.querySelector('mastery-booking-form'), form = host.form;
+          const fields = [...host.shadowRoot.querySelectorAll('.form-field')];
+          const box = host.getBoundingClientRect();
+          return {width: innerWidth, formWidth:box.width, height:form.getBoundingClientRect().height,
+            parentWidth:host.parentElement.getBoundingClientRect().width,
+            columns:getComputedStyle(form).gridTemplateColumns.split(' ').length,
+            paired:Math.abs(fields[0].getBoundingClientRect().top-fields[1].getBoundingClientRect().top)<1,
+            overflow:form.scrollWidth>form.clientWidth};
+        })()""")
+        assert layout["columns"] == 2 and layout["paired"], layout
+        assert not layout["overflow"], layout
+        assert abs(layout["formWidth"] - layout["parentWidth"]) < 2, layout
+        assert layout["height"] < 700, layout
+        print("Responsive layout:", json.dumps(layout))
     errors = [event for event in browser.events if event.get("method") == "Runtime.exceptionThrown"]
     assert not errors, f"{len(errors)} uncaught browser errors"
     print("No uncaught JavaScript errors.")

@@ -12,48 +12,64 @@ class MasteryBookingForm extends HTMLElement {
       <link rel="stylesheet" href="/booking-form.css">
       <form class="consultation-form" dir="rtl" lang="ar" aria-label="احجز استشارتك المجانية">
         <p class="required-note">الحقول المعلّمة بـ <span aria-hidden="true">*</span> مطلوبة.</p>
-        <label for="booking-company">اسم الشركة <span aria-hidden="true">*</span></label>
-        <input id="booking-company" name="company" placeholder="اسم المنشأة" autocomplete="organization" maxlength="200" required>
-        <p class="field-error" id="error-company"></p>
-        <label for="booking-fullName">الاسم الكامل للمسؤول <span aria-hidden="true">*</span></label>
-        <input id="booking-fullName" name="fullName" placeholder="الاسم الأول واسم العائلة"
-          autocomplete="name" maxlength="181" required aria-describedby="name-help error-fullName">
-        <p class="help" id="name-help">اكتب الاسم الأول واسم العائلة، مع مسافة بينهما.</p>
-        <p class="field-error" id="error-fullName"></p>
-        <label for="booking-phone">رقم الهاتف <span aria-hidden="true">*</span></label>
-        <input id="booking-phone" name="phone" class="numeric-input" type="tel" dir="ltr" lang="en" placeholder="+966501234567"
-          autocomplete="tel" maxlength="30" pattern="\\+[1-9][0-9 ]{7,28}" required
-          aria-describedby="phone-help error-phone">
-        <p class="help" id="phone-help">يرجى إدخال رمز الدولة مع رقم الهاتف.</p>
-        <p class="field-error" id="error-phone"></p>
-        <label for="booking-email">البريد الإلكتروني للعمل <span aria-hidden="true">*</span></label>
-        <input id="booking-email" name="email" type="email" dir="ltr" placeholder="name@company.com"
-          autocomplete="email" maxlength="254" required>
-        <p class="field-error" id="error-email"></p>
-        <label for="booking-employees">عدد الموظفين <span aria-hidden="true">*</span></label>
-        <select id="booking-employees" name="employees" class="numeric-input" lang="en" required disabled>
-          <option value="">جارٍ تحميل الخيارات…</option>
-        </select>
-        <p class="field-error" id="error-employees"></p>
-        <label for="booking-salespeople">عدد موظفي المبيعات في الشركة <span aria-hidden="true">*</span></label>
-        <input id="booking-salespeople" name="salespeople" class="numeric-input" type="text" dir="ltr" lang="en"
-          pattern="[0-9]{1,7}" maxlength="7" inputmode="numeric" placeholder="0" required>
-        <p class="field-error" id="error-salespeople"></p>
-        <label for="booking-country-search">الدولة <span aria-hidden="true">*</span></label>
-        <div class="country-picker">
-          <input id="booking-country-search" name="countrySearch" type="search" role="combobox"
-            placeholder="ابحث عن الدولة" autocomplete="off" required disabled
-            aria-autocomplete="list" aria-expanded="false" aria-controls="booking-country-list"
-            aria-describedby="error-country">
-          <input id="booking-country" name="country" type="hidden">
-          <div id="booking-country-list" class="country-menu" role="listbox" aria-label="الدول" hidden></div>
+        <div class="form-field">
+          <label for="booking-company">اسم الشركة <span aria-hidden="true">*</span></label>
+          <input id="booking-company" name="company" placeholder="اسم المنشأة" autocomplete="organization" maxlength="200" required>
+          <p class="field-error" id="error-company"></p>
         </div>
-        <span id="country-search-status" class="sr-only" role="status" aria-live="polite"></span>
-        <p class="field-error" id="error-country"></p>
-        <label for="booking-website">الموقع الإلكتروني <small>اختياري</small></label>
-        <input id="booking-website" name="website" type="text" dir="ltr" inputmode="url"
-          autocomplete="url" placeholder="https://company.com" maxlength="2048">
-        <p class="field-error" id="error-website"></p>
+        <div class="form-field">
+          <label for="booking-fullName">الاسم الكامل للمسؤول <span aria-hidden="true">*</span></label>
+          <input id="booking-fullName" name="fullName" placeholder="الاسم الأول واسم العائلة"
+            autocomplete="name" maxlength="181" required aria-describedby="name-help error-fullName">
+          <p class="help" id="name-help">اكتب الاسم الأول واسم العائلة، مع مسافة بينهما.</p>
+          <p class="field-error" id="error-fullName"></p>
+        </div>
+        <div class="form-field">
+          <label for="booking-phone">رقم الهاتف <span aria-hidden="true">*</span></label>
+          <input id="booking-phone" name="phone" class="numeric-input" type="tel" dir="ltr" lang="en" placeholder="+966501234567"
+            autocomplete="tel" maxlength="30" pattern="\\+[1-9][0-9 ]{7,28}" required
+            aria-describedby="phone-help error-phone">
+          <p class="help" id="phone-help">يرجى إدخال رمز الدولة مع رقم الهاتف.</p>
+          <p class="field-error" id="error-phone"></p>
+        </div>
+        <div class="form-field">
+          <label for="booking-email">البريد الإلكتروني للعمل <span aria-hidden="true">*</span></label>
+          <input id="booking-email" name="email" type="email" dir="ltr" placeholder="name@company.com"
+            autocomplete="email" maxlength="254" required>
+          <p class="field-error" id="error-email"></p>
+        </div>
+        <div class="form-field">
+          <label for="booking-employees">عدد الموظفين <span aria-hidden="true">*</span></label>
+          <select id="booking-employees" name="employees" class="numeric-input" lang="en" required disabled>
+            <option value="">جارٍ تحميل الخيارات…</option>
+          </select>
+          <p class="field-error" id="error-employees"></p>
+        </div>
+        <div class="form-field">
+          <label for="booking-salespeople">عدد موظفي المبيعات في الشركة <span aria-hidden="true">*</span></label>
+          <input id="booking-salespeople" name="salespeople" class="numeric-input" type="text" dir="ltr" lang="en"
+            pattern="[0-9]{1,7}" maxlength="7" inputmode="numeric" placeholder="0" required>
+          <p class="field-error" id="error-salespeople"></p>
+        </div>
+        <div class="form-field">
+          <label for="booking-country-search">الدولة <span aria-hidden="true">*</span></label>
+          <div class="country-picker">
+            <input id="booking-country-search" name="countrySearch" type="search" role="combobox"
+              placeholder="ابحث عن الدولة" autocomplete="off" required disabled
+              aria-autocomplete="list" aria-expanded="false" aria-controls="booking-country-list"
+              aria-describedby="error-country">
+            <input id="booking-country" name="country" type="hidden">
+            <div id="booking-country-list" class="country-menu" role="listbox" aria-label="الدول" hidden></div>
+          </div>
+          <span id="country-search-status" class="sr-only" role="status" aria-live="polite"></span>
+          <p class="field-error" id="error-country"></p>
+        </div>
+        <div class="form-field">
+          <label for="booking-website">الموقع الإلكتروني <small>اختياري</small></label>
+          <input id="booking-website" name="website" type="text" dir="ltr" inputmode="url"
+            autocomplete="url" placeholder="https://company.com" maxlength="2048">
+          <p class="field-error" id="error-website"></p>
+        </div>
         <div class="honeypot" aria-hidden="true">
           <label>اترك هذا الحقل فارغاً<input name="fax" tabindex="-1" autocomplete="off"></label>
         </div>

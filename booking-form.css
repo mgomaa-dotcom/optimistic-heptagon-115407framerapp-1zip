@@ -1,6 +1,6 @@
 :host {
   display: block;
-  width: 460px;
+  width: 100%;
   max-width: 100%;
   color: #28282c;
   font-family: "Swissra-Normal ☞", sans-serif;
@@ -8,15 +8,23 @@
 }
 * { box-sizing: border-box; }
 .consultation-form {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
   width: 100%;
-  gap: 7px;
+  gap: 12px 18px;
   padding: 32px;
   background: #fff;
   border-radius: 32px;
   box-shadow: 0 30px 80px #ff65552e, 0 8px 24px #0000000f;
 }
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.required-note, .privacy, .status, button { grid-column: 1 / -1; }
 label { display: block; font-size: 12px; line-height: 1.7; }
 label span, .required-note span { color: #c43c30; }
 label small { color: #737378; font-size: 11px; margin-right: 4px; }
@@ -73,8 +81,8 @@ input:focus, select:focus { outline: 2px solid #ff6555; outline-offset: 2px; }
 .required-note, .privacy, .help { margin: 0; color: #737378; font-size: 10px; line-height: 1.8; }
 .required-note { margin-bottom: 5px; }
 .privacy { text-align: center; margin-top: 3px; }
-.field-error { margin: 0 0 5px; color: #b53326; font-size: 11px; line-height: 1.7; }
-.field-error:empty { margin-bottom: 3px; }
+.field-error { margin: 0; color: #b53326; font-size: 11px; line-height: 1.7; }
+.field-error:empty { display: none; }
 .status { margin: 3px 0; font-size: 12px; line-height: 1.9; }
 .status:empty { display: none; }
 .status[data-state="error"] { color: #a42a20; }
@@ -96,7 +104,9 @@ button:disabled { opacity: .65; cursor: default; }
 button.secondary { background: #fff1ef; color: #b53326; }
 [hidden] { display: none !important; }
 .honeypot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-@media (max-width: 1199px) { :host { width: 100%; } }
+@media (max-width: 680px) {
+  .consultation-form { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 420px) {
   .consultation-form { padding: 24px 20px; border-radius: 24px; }
   input, select { font-size: 16px; }
