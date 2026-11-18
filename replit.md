@@ -42,7 +42,7 @@ Run backend checks with `python3 -m unittest discover -s tests -v`. They use fak
 
 ## Homepage video
 
-The existing video frame immediately above the statistics is filled by `assets/js/homepage-video.js`, styled by `assets/css/homepage-video.css`. It keeps one native, accessible player across Framer hydration, with controls, inline mobile playback, no autoplay, and `preload="none"`. The poster is a small frame extracted from the actual uploaded video.
+The existing video frame immediately above the statistics is filled by `assets/js/homepage-video.js`, styled by `assets/css/homepage-video.css`. It keeps one native, accessible player across Framer hydration, with controls, inline mobile playback, and `preload="none"` until entry. At 35% visibility it autoplays muted, pausing when offscreen or the browser tab is hidden. A visitor's manual pause is respected. Coral outer shadows provide a border glow without obscuring controls. The poster is a small frame extracted from the actual uploaded video.
 
 `backend/media.py` serves only the explicitly selected object from the existing App Storage bucket at `/media/academy-introduction.mp4`. It uses Replit-managed authentication via the Python storage SDK's identity configuration and the underlying GCS client for bounded reads; credentials never reach the browser. HTTP GET ranges and HEAD support playback and seeking without loading the 350 MB object into memory or Git. Storage errors return 503; unknown media paths are not exposed. Dependencies are tracked in `pyproject.toml` and `uv.lock`.
 

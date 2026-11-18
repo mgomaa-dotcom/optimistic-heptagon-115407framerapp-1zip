@@ -23,7 +23,7 @@ result = browser.evaluate("""(async () => {
   const assert = (condition, message) => { if (!condition) throw Error(message); };
   assert(video && document.querySelectorAll('video.academy-video').length === 1,
     'One player must survive hydration');
-  assert(video.controls && video.playsInline && !video.autoplay, 'Playback controls');
+  assert(video.controls && video.playsInline && video.muted, 'Muted inline playback controls');
   assert(video.preload === 'none' && video.readyState === 0, 'No eager video download');
   assert(video.parentElement.parentElement.nextElementSibling.id === 'numbers',
     'Video should precede statistics');
@@ -31,12 +31,19 @@ result = browser.evaluate("""(async () => {
   poster.src = video.poster;
   await poster.decode();
   assert(poster.naturalWidth > 0, 'Poster must load');
+  assert(getComputedStyle(video.parentElement).boxShadow !== 'none', 'Border glow');
   video.scrollIntoView({block: 'center'});
-  video.muted = true;
-  await video.play();
-  await new Promise(resolve => setTimeout(resolve, 1600));
+  for (let attempt = 0; attempt < 60 && (video.paused || video.currentTime === 0); attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
   assert(video.videoWidth > 0 && video.currentTime > 0 && !video.paused,
-    'Actual video playback');
+    'Automatic playback when entering section');
+  window.scrollTo(0, 0);
+  await new Promise(resolve => setTimeout(resolve, 600));
+  assert(video.paused, 'Pause when leaving section');
+  video.scrollIntoView({block: 'center'});
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  assert(!video.paused, 'Resume on return');
   const duration = video.duration;
   video.currentTime = Math.min(20, duration / 2);
   await new Promise((resolve, reject) => {
@@ -45,8 +52,15 @@ result = browser.evaluate("""(async () => {
   });
   assert(video.currentTime >= Math.min(19, duration / 2), 'Range seeking');
   video.pause();
+  await new Promise(resolve => setTimeout(resolve, 200));
+  window.scrollTo(0, 0);
+  await new Promise(resolve => setTimeout(resolve, 400));
+  video.scrollIntoView({block: 'center'});
+  await new Promise(resolve => setTimeout(resolve, 600));
+  assert(video.paused, 'Respect manual pause after reentry');
   assert(!video.error, 'No media error');
-  return {onePlayerAfterHydration:true, controls:true, noAutoplay:true,
+  return {onePlayerAfterHydration:true, controls:true, viewportAutoplay:true,
+    offscreenPause:true, resumeOnReturn:true, manualPauseRespected:true, borderGlow:true,
     lazyLoading:true, poster:true, actualPlayback:true, seeking:true,
     duration, videoWidth:video.videoWidth, videoHeight:video.videoHeight};
 })()""")

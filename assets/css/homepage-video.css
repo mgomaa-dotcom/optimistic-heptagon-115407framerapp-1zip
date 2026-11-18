@@ -3,6 +3,12 @@
   aspect-ratio: 16 / 9;
   scroll-margin-top: 100px;
   background: #111113;
+  /* Outer shadows are visible beyond the frame's rounded overflow clip. */
+  box-shadow:
+    0 0 0 1px rgba(255, 139, 122, 0.5),
+    0 0 30px 4px rgba(255, 101, 85, 0.25),
+    0 0 90px 16px rgba(255, 101, 85, 0.16),
+    0 24px 90px rgba(255, 101, 85, 0.12);
 }
 .academy-video {
   display: block;
