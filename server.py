@@ -97,7 +97,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.headers.get("Content-Type", "").split(";")[0].strip() != "application/json":
             self.send_json(415, {"error": "نوع الطلب غير مدعوم."})
             return
-        ip = self.headers.get("X-Forwarded-For", self.client_address[0]).split(",")[0].strip()
+        # Forwarding headers are client-controlled without a verified proxy
+        # trust boundary. Use the socket peer even if visitors share a proxy.
+        ip = self.client_address[0]
         now = time.monotonic()
         with attempt_lock:
             if len(attempts) > 10000:
