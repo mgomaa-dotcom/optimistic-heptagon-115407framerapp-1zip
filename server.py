@@ -16,7 +16,7 @@ from backend.media import serve_video
 ROOT = Path(__file__).resolve().parent
 STATIC_FILES = {
     "index.html", "styles.css", "hero-image.css", "booking-form.js",
-    "booking-form.css", "country-picker.js",
+    "booking-form.css", "country-picker.js", "thank-you.html",
 }
 booking = Booking(ROOT / ".local/booking-state.sqlite3")
 attempts = defaultdict(deque)
@@ -57,7 +57,8 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/api/"):
             self.send_json(404, {"error": "Not found"})
             return
-        relative = unquote(path).lstrip("/") or "index.html"
+        relative = ("thank-you.html" if path in {"/thank-you", "/thank-you/"}
+                    else unquote(path).lstrip("/") or "index.html")
         target = (ROOT / relative).resolve()
         public = relative in STATIC_FILES or relative.startswith("assets/")
         if (not public or not target.is_relative_to(ROOT) or not target.is_file()

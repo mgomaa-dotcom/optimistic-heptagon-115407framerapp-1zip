@@ -151,6 +151,11 @@ class MasteryBookingForm extends HTMLElement {
     }
   }
 
+  redirectToThankYou() {
+    // Same-origin fixed destination: no personal data or CRM identifiers in URLs.
+    window.location.assign("/thank-you");
+  }
+
   async submit(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -203,6 +208,7 @@ class MasteryBookingForm extends HTMLElement {
       this.submitButton.textContent = "تم إرسال طلبك";
       this.form.querySelectorAll("input, select").forEach((field) => { field.disabled = true; });
       this.status.focus();
+      this.redirectToThankYou();
     } catch {
       this.status.dataset.state = "error";
       this.status.textContent = "تعذّر تأكيد الإرسال بسبب الاتصال. يمكنك المحاولة مجدداً بنفس البيانات دون تكرار الطلب.";

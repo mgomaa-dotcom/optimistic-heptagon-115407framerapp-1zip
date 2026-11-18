@@ -166,6 +166,9 @@ if __name__ == "__main__":
       }
       assert(form.checkValidity(), 'normalized values rejected');
       const originalFetch = window.fetch;
+      const originalRedirect = host.redirectToThankYou;
+      const redirects = [];
+      host.redirectToThankYou = () => redirects.push('/thank-you');
       const submissions = [];
       let mode = 'error';
       window.fetch = async (url, options) => {
@@ -185,6 +188,7 @@ if __name__ == "__main__":
       assert(host.status.textContent === 'Test service rejection', 'error message missing');
       assert(!host.submitButton.disabled, 'retry unavailable');
       assert(form.elements.company.value === 'Browser Fixture', 'input lost on error');
+      assert(redirects.length === 0, 'failed submission redirected');
       mode = 'success';
       form.requestSubmit();
       await new Promise(resolve => setTimeout(resolve, 180));
@@ -194,9 +198,11 @@ if __name__ == "__main__":
       assert(submissions[1].country === 'SA', 'country code payload missing');
       assert(!('countrySearch' in submissions[1]), 'search query leaked into payload');
       assert(host.status.dataset.state === 'success', 'success state missing');
+      assert(redirects.length === 1 && redirects[0] === '/thank-you', 'success redirect missing');
       assert(host.submitButton.disabled, 'successful request can be resent');
       assert(host.getBoundingClientRect().width <= innerWidth, 'mobile form overflow');
       window.fetch = originalFetch;
+      host.redirectToThankYou = originalRedirect;
       return {countries:picker.countries.length,requiredFields:7,
         fullNameValidation:true,englishDigits:true,saudiFirst:true,
         countrySearchEnglishAndArabic:true,keyboardAndPointerSelection:true,

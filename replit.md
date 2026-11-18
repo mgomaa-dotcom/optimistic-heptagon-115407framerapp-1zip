@@ -40,6 +40,12 @@ REST Countries is paginated server-side and cached for 24 hours. Both secrets ar
 ## Form checks
 Run backend checks with `python3 -m unittest discover -s tests -v`. They use fake providers and do not create CRM records. `tests/browser_form_check.py` exercises the live form in a local headless Chromium debugging session on port 9222; its submission responses are deliberately stubbed. Live CRM creation requires a separately approved, clearly labeled test submission.
 
+## Consultation thank-you page
+
+Confirmed `ok: true` responses from `/api/booking` navigate to `/thank-you` using a fixed same-origin destination. The Arabic RTL confirmation page (`thank-you.html`, `assets/css/thank-you.css`, `assets/js/thank-you.js`) includes short entrance/checkmark animations, reduced-motion support, and working homepage/track links. No form values or CRM identifiers are put in the URL or browser storage. Failed, rejected, and uncertain deliveries remain on the original form. The thank-you route and its trailing-slash variant both serve the static page and can be refreshed without submitting again.
+
+`python3 tests/browser_thank_you_check.py` checks the actual success redirect with a stubbed submission response, five failure paths, uncertain delivery, mobile/tablet/desktop layouts, reload, and reduced motion. It never writes to CRM. The existing form regression test intercepts only the final redirect so it can still verify form validation and responsive layout.
+
 ## Homepage video
 
 The existing video frame immediately above the statistics is filled by `assets/js/homepage-video.js`, styled by `assets/css/homepage-video.css`. It keeps one native, accessible player across Framer hydration, with controls, inline mobile playback, and `preload="none"` until entry. At 35% visibility it autoplays muted, pausing when offscreen or the browser tab is hidden. A visitor's manual pause is respected. Coral outer shadows provide a border glow without obscuring controls. The poster is a small frame extracted from the actual uploaded video.
