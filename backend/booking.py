@@ -7,6 +7,7 @@ import sqlite3
 import threading
 import time
 import uuid
+import unicodedata
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
@@ -27,12 +28,22 @@ class DeliveryUncertain(Exception):
     pass
 
 
+def english_digits(value):
+    return value.translate(str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789"))
+
+
 def validate(data, countries, employee_options):
     if not isinstance(data, dict):
         raise ValidationError({"form": "بيانات الطلب غير صالحة."})
+    data = dict(data)
+    # Accept already-open older forms, while validating the new full-name contract.
+    if "fullName" not in data:
+        first, last = data.get("firstName"), data.get("lastName")
+        if isinstance(first, str) and isinstance(last, str) and first.strip() and last.strip():
+            data["fullName"] = first.strip() + " " + last.strip()
     clean, errors = {}, {}
     limits = {
-        "company": 200, "firstName": 80, "lastName": 100, "email": 254,
+        "company": 200, "fullName": 181, "email": 254,
         "phone": 30, "employees": 60, "salespeople": 8, "country": 200,
         "website": 2048,
     }
@@ -49,6 +60,18 @@ def validate(data, countries, employee_options):
         clean[field] = value
     if errors:
         raise ValidationError(errors)
+    parts = clean.pop("fullName").split()
+    valid_parts = all(
+        any(unicodedata.category(char).startswith("L") for char in part)
+        and all(unicodedata.category(char)[0] in ("L", "M") or char in "'’.-" for char in part)
+        for part in parts
+    )
+    if len(parts) < 2 or not valid_parts or len(parts[0]) > 80 or len(" ".join(parts[1:])) > 100:
+        errors["fullName"] = "اكتب الاسم الأول واسم العائلة مع مسافة بينهما."
+    else:
+        clean["firstName"], clean["lastName"] = parts[0], " ".join(parts[1:])
+    clean["phone"] = english_digits(clean["phone"])
+    clean["salespeople"] = english_digits(clean["salespeople"])
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", clean["email"]):
         errors["email"] = "يرجى إدخال بريد إلكتروني صحيح."
     phone = re.sub(r"[\s().-]", "", clean["phone"])
@@ -162,7 +185,7 @@ class Booking:
             raise ProviderError("bitrix", code="employee_options_missing")
         result = []
         for status in statuses:
-            label = status["NAME"]
+            label = english_digits(status["NAME"])
             numbers = [int(value) for value in re.findall(r"\d+", label)]
             maximum = numbers[-1] if len(numbers) >= 2 else None
             result.append({"value": status["STATUS_ID"], "label": label, "maximum": maximum})

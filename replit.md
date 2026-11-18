@@ -27,7 +27,9 @@ The export may retain links, embedded tools, and services hosted by Framer or ot
 - `backend/booking.py`: validation, CRM mappings, and persistent idempotency tracking.
 - `server.py`: public website serving, options endpoint, submission endpoint, and basic request limiting.
 
-All visible fields are required except website. Contact name is split into first and last name, and phone requires an international country code. "Number of sales" is interpreted as sales-team headcount, not revenue.
+All visible fields are required except website. Full name must contain at least two name parts separated by spaces; the first part maps to Bitrix First Name and the remaining parts map to Last Name. Older already-open forms with separate name fields remain compatible. Phone requires an international country code. Phone and sales-team inputs normalize Arabic/Persian digits to English digits and use a Latin-digit font. "Number of sales" is interpreted as sales-team headcount, not revenue.
+
+`country-picker.js` provides the searchable country combobox, with Saudi Arabia first, country flags, English/Arabic name search, and keyboard selection. Typed text must match a valid country before submission.
 
 Submissions create a company, then a linked contact, then a lead linked to both. Employee-size options come from Bitrix's `EMPLOYEES` statuses and are saved to Company Employees. Sales-team headcount is mapped to the lead custom field labeled `No_of_employees`. Country is always saved to the company's and lead's standard address-country fields; where a custom Country enumeration contains a matching option, that is populated too. No new enumeration options are created automatically. Optional website is saved to Company and Lead WEB. Lead comments include both headcounts and country.
 

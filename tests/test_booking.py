@@ -13,7 +13,7 @@ from backend.providers import ProviderError
 COUNTRIES = [{"code": "SA", "isoCode": "SA", "name": "Saudi Arabia", "flag": "🇸🇦"}]
 OPTIONS = [{"value": "EMPLOYEES_4", "label": "21 – 50 employees", "maximum": 50}]
 VALID = {
-    "company": "Integration Fixture", "firstName": "Test", "lastName": "Person",
+    "company": "Integration Fixture", "fullName": "Test Person",
     "email": "fixture@example.invalid", "phone": "+966501234567",
     "employees": "EMPLOYEES_4", "salespeople": "8", "country": "SA", "website": "",
 }
@@ -66,7 +66,7 @@ class ValidationTests(unittest.TestCase):
             ("employees", "unrecognized"), ("salespeople", "-1"),
             ("salespeople", "1.5"), ("salespeople", "51"),
             ("website", "javascript:alert(1)"), ("website", "https://user:pass@example.com"),
-            ("firstName", ["not", "text"]), ("company", "\n"),
+            ("fullName", ["not", "text"]), ("company", "\n"),
         ]:
             with self.subTest(field=field, value=value), self.assertRaises(ValidationError):
                 validate({**VALID, field: value}, COUNTRIES, OPTIONS)
@@ -76,6 +76,38 @@ class ValidationTests(unittest.TestCase):
                         COUNTRIES, OPTIONS)
         self.assertEqual(data["website"], "https://example.com")
         self.assertEqual(data["phone"], "+966501234567")
+
+    def test_full_name_requires_two_real_name_parts(self):
+        for name in ["John", " John ", "   ", "John 123", "123 456", "John_ Doe"]:
+            with self.subTest(name=name), self.assertRaises(ValidationError) as raised:
+                validate({**VALID, "fullName": name}, COUNTRIES, OPTIONS)
+            self.assertIn("fullName", raised.exception.fields)
+
+    def test_full_name_preserves_all_family_name_parts(self):
+        for name, first, last in [
+            ("  John   van  Smith  ", "John", "van Smith"),
+            ("محمد عبد الله", "محمد", "عبد الله"),
+            ("Anne-Marie O’Neill", "Anne-Marie", "O’Neill"),
+        ]:
+            with self.subTest(name=name):
+                clean = validate({**VALID, "fullName": name}, COUNTRIES, OPTIONS)
+                self.assertEqual((clean["firstName"], clean["lastName"]), (first, last))
+                _, contact, lead = build_records(clean, "UF_SALES", METADATA, METADATA)
+                self.assertEqual(contact["NAME"], first)
+                self.assertEqual(contact["LAST_NAME"], last)
+                self.assertEqual(lead["LAST_NAME"], last)
+
+    def test_old_open_forms_still_map_to_same_names(self):
+        old = {key: value for key, value in VALID.items() if key != "fullName"}
+        old.update(firstName="Test", lastName="Person")
+        self.assertEqual(validate(old, COUNTRIES, OPTIONS), validate(VALID, COUNTRIES, OPTIONS))
+
+    def test_arabic_and_persian_digits_become_english(self):
+        for phone, count in [("+٩٦٦٥٠١٢٣٤٥٦٧", "٨"), ("+۹۶۶۵۰۱۲۳۴۵۶۷", "۸")]:
+            with self.subTest(phone=phone):
+                clean = validate({**VALID, "phone": phone, "salespeople": count}, COUNTRIES, OPTIONS)
+                self.assertEqual(clean["phone"], "+966501234567")
+                self.assertEqual(clean["salespeople"], "8")
 
     def test_separate_employee_and_sales_fields(self):
         data = validate(VALID, COUNTRIES, OPTIONS)

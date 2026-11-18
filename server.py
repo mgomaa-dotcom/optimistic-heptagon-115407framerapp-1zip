@@ -13,7 +13,10 @@ from backend.booking import Booking, DeliveryUncertain, SubmissionConflict, Vali
 from backend.providers import ProviderError
 
 ROOT = Path(__file__).resolve().parent
-STATIC_FILES = {"index.html", "styles.css", "hero-image.css", "booking-form.js", "booking-form.css"}
+STATIC_FILES = {
+    "index.html", "styles.css", "hero-image.css", "booking-form.js",
+    "booking-form.css", "country-picker.js",
+}
 booking = Booking(ROOT / ".local/booking-state.sqlite3")
 attempts = defaultdict(deque)
 attempt_lock = threading.Lock()

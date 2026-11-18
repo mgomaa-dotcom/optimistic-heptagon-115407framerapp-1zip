@@ -91,6 +91,7 @@ if __name__ == "__main__":
     browser = CDP()
     browser.call("Runtime.enable")
     browser.call("Page.enable")
+    browser.call("Page.bringToFront")
     browser.call("Emulation.setDeviceMetricsOverride", {
         "width": 390, "height": 844, "deviceScaleFactor": 1, "mobile": True,
     })
@@ -107,20 +108,61 @@ if __name__ == "__main__":
       const assert = (condition, label) => { if (!condition) throw Error(label); };
       assert(document.querySelectorAll('mastery-booking-form').length === 1, 'duplicate form');
       assert(getComputedStyle(document.querySelector('form[data-framer-name="Booking Form"]')).display === 'none', 'old form visible');
-      assert(form.elements.country.options.length > 250, 'country pagination incomplete');
-      assert([...form.elements.country.options].some(o => o.value === 'SA' && o.text.includes('🇸🇦')), 'country flag missing');
+      assert(host.countryPicker.countries.length > 250, 'country pagination incomplete');
+      assert(host.countryPicker.countries[0].code === 'SA', 'Saudi Arabia must be first');
+      assert(host.countryPicker.countries[0].flag.includes('🇸🇦'), 'country flag missing');
       assert(!form.elements.website.required, 'website must be optional');
-      for (const name of ['company','firstName','lastName','phone','email','employees','salespeople','country'])
+      for (const name of ['company','fullName','phone','email','employees','salespeople','countrySearch'])
         assert(form.elements[name].required, name + ' must be required');
       assert(!form.checkValidity(), 'empty form must be invalid');
-      const data = {company:'Browser Fixture',firstName:'Test',lastName:'Person',
+      const nameField = form.elements.fullName;
+      nameField.value = 'John';
+      nameField.dispatchEvent(new Event('input', {bubbles:true}));
+      assert(!nameField.checkValidity(), 'single-word name must be rejected');
+      nameField.value = 'John 123';
+      nameField.dispatchEvent(new Event('input', {bubbles:true}));
+      assert(!nameField.checkValidity(), 'number must not count as a second name');
+      const picker = host.countryPicker;
+      picker.input.focus();
+      assert(!picker.menu.hidden && picker.menu.children[0].textContent.includes('Saudi Arabia'), 'Saudi first when opening');
+      picker.input.value = 'Canada';
+      picker.input.dispatchEvent(new Event('input', {bubbles:true}));
+      assert(picker.filtered.length === 1 && picker.filtered[0].code === 'CA', 'English search failed');
+      picker.input.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));
+      assert(picker.input.hasAttribute('aria-activedescendant'), 'keyboard option missing');
+      picker.input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+      assert(form.elements.country.value === 'CA' && picker.menu.hidden, 'keyboard selection failed');
+      picker.input.value = 'not-a-real-country';
+      picker.input.dispatchEvent(new Event('input', {bubbles:true}));
+      assert(!picker.input.checkValidity() && form.elements.country.value === '', 'unlisted country accepted');
+      assert(picker.menu.textContent.includes('لا توجد'), 'empty state missing');
+      picker.input.value = 'السعودية';
+      picker.input.dispatchEvent(new Event('input', {bubbles:true}));
+      assert(picker.filtered.some(c => c.code === 'SA'), 'Arabic search failed');
+      const sa = picker.filtered.findIndex(c => c.code === 'SA');
+      picker.menu.children[sa].dispatchEvent(new MouseEvent('click',{bubbles:true}));
+      assert(form.elements.country.value === 'SA' && picker.input.checkValidity(), 'pointer country selection failed');
+      const data = {company:'Browser Fixture',fullName:'Test Person',
         phone:'+966501234567',email:'fixture@example.invalid',
-        employees:host.employees[0].value,salespeople:'2',country:'SA',website:''};
-      for (const [name,value] of Object.entries(data)) form.elements[name].value = value;
+        employees:host.employees[0].value,salespeople:'2',website:''};
+      for (const [name,value] of Object.entries(data)) {
+        form.elements[name].value = value;
+        form.elements[name].dispatchEvent(new Event('input',{bubbles:true}));
+      }
       assert(form.checkValidity(), 'valid input and optional website rejected');
       form.elements.salespeople.value = '-1';
       assert(!form.checkValidity(), 'negative sales count accepted');
       form.elements.salespeople.value = '2';
+      for (const [name,value,expected] of [
+        ['phone','+٩٦٦٥٠١٢٣٤٥٦٧','+966501234567'],
+        ['salespeople','۲','2']
+      ]) {
+        form.elements[name].value = value;
+        form.elements[name].dispatchEvent(new Event('input',{bubbles:true}));
+        assert(form.elements[name].value === expected, 'digits not normalized for '+name);
+        assert(getComputedStyle(form.elements[name]).fontFamily.startsWith('Arial'), 'numeric font is not English');
+      }
+      assert(form.checkValidity(), 'normalized values rejected');
       const originalFetch = window.fetch;
       const submissions = [];
       let mode = 'error';
@@ -146,11 +188,16 @@ if __name__ == "__main__":
       await new Promise(resolve => setTimeout(resolve, 180));
       assert(submissions.length === 2, 'retry not sent');
       assert(submissions[1].website === '', 'optional website altered');
+      assert(submissions[1].fullName === 'Test Person', 'full name payload missing');
+      assert(submissions[1].country === 'SA', 'country code payload missing');
+      assert(!('countrySearch' in submissions[1]), 'search query leaked into payload');
       assert(host.status.dataset.state === 'success', 'success state missing');
       assert(host.submitButton.disabled, 'successful request can be resent');
       assert(host.getBoundingClientRect().width <= innerWidth, 'mobile form overflow');
       window.fetch = originalFetch;
-      return {countries:form.elements.country.options.length - 1,requiredFields:8,
+      return {countries:picker.countries.length,requiredFields:7,
+        fullNameValidation:true,englishDigits:true,saudiFirst:true,
+        countrySearchEnglishAndArabic:true,keyboardAndPointerSelection:true,
         validation:true,errorAndRetry:true,success:true,doubleSubmitProtection:true,
         mobileWidth:host.getBoundingClientRect().width,submissionTransport:'stubbed; no CRM writes'};
     })()""")

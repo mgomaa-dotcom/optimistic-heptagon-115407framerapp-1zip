@@ -1,3 +1,8 @@
+import { CountryPicker } from "./country-picker.js";
+
+const englishDigits = (value) => value.replace(/[٠-٩۰-۹]/g, (digit) =>
+  String(digit.charCodeAt(0) - (digit.charCodeAt(0) <= 0x669 ? 0x660 : 0x6f0)));
+
 /* Isolated from the exported Framer form so hydration cannot replace user input. */
 class MasteryBookingForm extends HTMLElement {
   connectedCallback() {
@@ -10,20 +15,13 @@ class MasteryBookingForm extends HTMLElement {
         <label for="booking-company">اسم الشركة <span aria-hidden="true">*</span></label>
         <input id="booking-company" name="company" placeholder="اسم المنشأة" autocomplete="organization" maxlength="200" required>
         <p class="field-error" id="error-company"></p>
-        <div class="name-row">
-          <div>
-            <label for="booking-firstName">الاسم الأول <span aria-hidden="true">*</span></label>
-            <input id="booking-firstName" name="firstName" placeholder="الاسم الأول" autocomplete="given-name" maxlength="80" required>
-            <p class="field-error" id="error-firstName"></p>
-          </div>
-          <div>
-            <label for="booking-lastName">اسم العائلة <span aria-hidden="true">*</span></label>
-            <input id="booking-lastName" name="lastName" placeholder="اسم العائلة" autocomplete="family-name" maxlength="100" required>
-            <p class="field-error" id="error-lastName"></p>
-          </div>
-        </div>
+        <label for="booking-fullName">الاسم الكامل للمسؤول <span aria-hidden="true">*</span></label>
+        <input id="booking-fullName" name="fullName" placeholder="الاسم الأول واسم العائلة"
+          autocomplete="name" maxlength="181" required aria-describedby="name-help error-fullName">
+        <p class="help" id="name-help">اكتب الاسم الأول واسم العائلة، مع مسافة بينهما.</p>
+        <p class="field-error" id="error-fullName"></p>
         <label for="booking-phone">رقم الهاتف <span aria-hidden="true">*</span></label>
-        <input id="booking-phone" name="phone" type="tel" dir="ltr" placeholder="+966501234567"
+        <input id="booking-phone" name="phone" class="numeric-input" type="tel" dir="ltr" lang="en" placeholder="+966501234567"
           autocomplete="tel" maxlength="30" pattern="\\+[1-9][0-9 ]{7,28}" required
           aria-describedby="phone-help error-phone">
         <p class="help" id="phone-help">يرجى إدخال رمز الدولة مع رقم الهاتف.</p>
@@ -33,18 +31,24 @@ class MasteryBookingForm extends HTMLElement {
           autocomplete="email" maxlength="254" required>
         <p class="field-error" id="error-email"></p>
         <label for="booking-employees">عدد الموظفين <span aria-hidden="true">*</span></label>
-        <select id="booking-employees" name="employees" required disabled>
+        <select id="booking-employees" name="employees" class="numeric-input" lang="en" required disabled>
           <option value="">جارٍ تحميل الخيارات…</option>
         </select>
         <p class="field-error" id="error-employees"></p>
         <label for="booking-salespeople">عدد موظفي المبيعات في الشركة <span aria-hidden="true">*</span></label>
-        <input id="booking-salespeople" name="salespeople" type="number" min="0" max="9999999"
-          step="1" inputmode="numeric" placeholder="عدد أفراد فريق المبيعات" required>
+        <input id="booking-salespeople" name="salespeople" class="numeric-input" type="text" dir="ltr" lang="en"
+          pattern="[0-9]{1,7}" maxlength="7" inputmode="numeric" placeholder="0" required>
         <p class="field-error" id="error-salespeople"></p>
-        <label for="booking-country">الدولة <span aria-hidden="true">*</span></label>
-        <select id="booking-country" name="country" required disabled>
-          <option value="">جارٍ تحميل الدول…</option>
-        </select>
+        <label for="booking-country-search">الدولة <span aria-hidden="true">*</span></label>
+        <div class="country-picker">
+          <input id="booking-country-search" name="countrySearch" type="search" role="combobox"
+            placeholder="ابحث عن الدولة" autocomplete="off" required disabled
+            aria-autocomplete="list" aria-expanded="false" aria-controls="booking-country-list"
+            aria-describedby="error-country">
+          <input id="booking-country" name="country" type="hidden">
+          <div id="booking-country-list" class="country-menu" role="listbox" aria-label="الدول" hidden></div>
+        </div>
+        <span id="country-search-status" class="sr-only" role="status" aria-live="polite"></span>
         <p class="field-error" id="error-country"></p>
         <label for="booking-website">الموقع الإلكتروني <small>اختياري</small></label>
         <input id="booking-website" name="website" type="text" dir="ltr" inputmode="url"
@@ -69,19 +73,34 @@ class MasteryBookingForm extends HTMLElement {
     root.getElementById("booking-retry").addEventListener("click", () => this.loadOptions());
     this.form.addEventListener("input", (event) => {
       const field = event.target;
+      if (["phone", "salespeople"].includes(field.name)) field.value = englishDigits(field.value);
+      if (field.name === "fullName" || field.name === "salespeople") this.validateFields();
       field.removeAttribute("aria-invalid");
-      root.getElementById(`error-${field.name}`)?.replaceChildren();
+      root.getElementById(`error-${field.name === "countrySearch" ? "country" : field.name}`)?.replaceChildren();
     });
     this.form.elements.employees.addEventListener("change", () => {
-      const selected = this.employees.find((item) => item.value === this.form.elements.employees.value);
-      this.form.elements.salespeople.max = selected?.maximum || 9999999;
+      this.validateFields();
     });
     for (const field of this.form.elements) {
-      if (root.getElementById(`error-${field.name}`) && field.name !== "phone") {
+      if (root.getElementById(`error-${field.name}`) && !["phone", "fullName", "country"].includes(field.name)) {
         field.setAttribute("aria-describedby", `error-${field.name}`);
       }
     }
     this.loadOptions();
+  }
+
+  validateFields() {
+    const name = this.form.elements.fullName;
+    const parts = name.value.trim().split(/\s+/u);
+    const validName = parts.length >= 2 && parts.every((part) =>
+      /\p{L}/u.test(part) && /^[\p{L}\p{M}'’.-]+$/u.test(part)) &&
+      parts[0].length <= 80 && parts.slice(1).join(" ").length <= 100;
+    name.setCustomValidity(validName ? "" : "اكتب الاسم الأول واسم العائلة مع مسافة بينهما.");
+    const count = this.form.elements.salespeople;
+    const maximum = this.employees?.find((item) =>
+      item.value === this.form.elements.employees.value)?.maximum;
+    count.setCustomValidity(maximum && Number(count.value) > maximum
+      ? "عدد موظفي المبيعات لا يمكن أن يتجاوز إجمالي الموظفين." : "");
   }
 
   async loadOptions() {
@@ -105,9 +124,7 @@ class MasteryBookingForm extends HTMLElement {
         select.disabled = false;
       };
       populate("employees", "اختر عدد الموظفين", data.employees);
-      populate("country", "اختر الدولة", data.countries.map((item) => ({
-        value: item.code, label: `${item.flag ? item.flag + " " : ""}${item.name}`,
-      })));
+      this.countryPicker = new CountryPicker(root, data.countries);
       status.textContent = "";
       this.ready = true;
       this.submitButton.disabled = false;
@@ -121,10 +138,17 @@ class MasteryBookingForm extends HTMLElement {
   async submit(event) {
     event.preventDefault();
     event.stopPropagation();
-    if (this.busy || !this.ready || !this.form.reportValidity()) return;
+    if (this.busy || !this.ready) return;
+    this.form.elements.phone.value = englishDigits(this.form.elements.phone.value);
+    this.form.elements.salespeople.value = englishDigits(this.form.elements.salespeople.value);
+    this.validateFields();
+    if (!this.form.reportValidity()) return;
     if (this.form.elements.fax.value) return;
     const payload = Object.fromEntries(new FormData(this.form));
     delete payload.fax;
+    delete payload.countrySearch;
+    payload.fullName = payload.fullName.trim().replace(/\s+/gu, " ");
+    this.countryPicker.close();
     this.busy = true;
     const controls = [...this.form.querySelectorAll("input, select")];
     controls.forEach((field) => { field.disabled = true; });
@@ -145,7 +169,8 @@ class MasteryBookingForm extends HTMLElement {
         for (const [name, message] of Object.entries(data.fields || {})) {
           const error = this.shadowRoot.getElementById(`error-${name}`);
           if (error) error.textContent = message;
-          this.form.elements[name]?.setAttribute("aria-invalid", "true");
+          (name === "country" ? this.countryPicker.input : this.form.elements[name])
+            ?.setAttribute("aria-invalid", "true");
         }
         this.status.textContent = data.error || "تعذّر إرسال الطلب. يرجى المحاولة مجدداً.";
         this.status.dataset.state = "error";

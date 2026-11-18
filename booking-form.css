@@ -37,8 +37,39 @@ input::placeholder { color: #7d7d85; }
 select { font-family: "Swissra-Normal ☞", "Noto Color Emoji", sans-serif; }
 input:focus, select:focus { outline: 2px solid #ff6555; outline-offset: 2px; }
 [aria-invalid="true"] { border-color: #b53326; }
-.name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.name-row label { margin-bottom: 7px; }
+.numeric-input { font-family: Arial, sans-serif; font-variant-numeric: lining-nums tabular-nums; }
+.country-picker { position: relative; width: 100%; }
+.country-menu {
+  position: absolute;
+  z-index: 10;
+  inset-inline: 0;
+  top: calc(100% + 6px);
+  max-height: 230px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #e4e4e8;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px #0002;
+}
+.country-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  direction: ltr;
+  text-align: left;
+}
+.country-option:hover, .country-option.is-active { background: #fff1ef; }
+.country-option[aria-selected="true"] { color: #a42a20; font-weight: bold; }
+.country-flag { min-width: 24px; font-family: "Noto Color Emoji", sans-serif; font-size: 20px; }
+.country-empty { padding: 12px; margin: 0; font-size: 12px; line-height: 1.8; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .required-note, .privacy, .help { margin: 0; color: #737378; font-size: 10px; line-height: 1.8; }
 .required-note { margin-bottom: 5px; }
 .privacy { text-align: center; margin-top: 3px; }
@@ -69,5 +100,4 @@ button.secondary { background: #fff1ef; color: #b53326; }
 @media (max-width: 420px) {
   .consultation-form { padding: 24px 20px; border-radius: 24px; }
   input, select { font-size: 16px; }
-  .name-row { grid-template-columns: 1fr; gap: 4px; }
 }
