@@ -40,6 +40,14 @@ REST Countries is paginated server-side and cached for 24 hours. Both secrets ar
 ## Form checks
 Run backend checks with `python3 -m unittest discover -s tests -v`. They use fake providers and do not create CRM records. `tests/browser_form_check.py` exercises the live form in a local headless Chromium debugging session on port 9222; its submission responses are deliberately stubbed. Live CRM creation requires a separately approved, clearly labeled test submission.
 
+## Homepage video
+
+The existing video frame immediately above the statistics is filled by `assets/js/homepage-video.js`, styled by `assets/css/homepage-video.css`. It keeps one native, accessible player across Framer hydration, with controls, inline mobile playback, no autoplay, and `preload="none"`. The poster is a small frame extracted from the actual uploaded video.
+
+`backend/media.py` serves only the explicitly selected object from the existing App Storage bucket at `/media/academy-introduction.mp4`. It uses Replit-managed authentication via the Python storage SDK's identity configuration and the underlying GCS client for bounded reads; credentials never reach the browser. HTTP GET ranges and HEAD support playback and seeking without loading the 350 MB object into memory or Git. Storage errors return 503; unknown media paths are not exposed. Dependencies are tracked in `pyproject.toml` and `uv.lock`.
+
+Run `python3 -m unittest discover -s tests -p 'test_*.py'` for backend checks. With Chromium debug port 9222 running, `python3 tests/browser_video_check.py` checks actual playback, seeking, hydration, poster, and responsive dimensions without creating CRM records.
+
 ## Homepage motion
 `assets/js/learning-enhancements.js` progressively enhances the sitemap, sales tracks, and methodology without rewriting the exported Framer bundle. `assets/css/learning-enhancements.css` scopes the layout changes to those sections. GSAP 3.13.0 is served locally from `assets/vendor/gsap.min.js`, with its license header retained.
 

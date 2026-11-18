@@ -1,3 +1,4 @@
 .local/booking-state.sqlite3*
 /generated-artifacts/
 zipFile.zip
+/tests/

@@ -11,6 +11,7 @@ from urllib.parse import unquote, urlsplit
 
 from backend.booking import Booking, DeliveryUncertain, SubmissionConflict, ValidationError
 from backend.providers import ProviderError
+from backend.media import serve_video
 
 ROOT = Path(__file__).resolve().parent
 STATIC_FILES = {
@@ -43,6 +44,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlsplit(self.path).path
+        if path == "/media/academy-introduction.mp4":
+            serve_video(self)
+            return
         if path == "/api/booking/options":
             try:
                 self.send_json(200, booking.options())
@@ -71,6 +75,14 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(content)))
         self.end_headers()
         self.wfile.write(content)
+
+    def do_HEAD(self):
+        if urlsplit(self.path).path == "/media/academy-introduction.mp4":
+            serve_video(self, head=True)
+            return
+        self.send_response(404)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def do_POST(self):
         if self.path != "/api/booking":
