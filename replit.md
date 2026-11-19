@@ -50,6 +50,16 @@ Confirmed `ok: true` responses from `/api/booking` navigate to `/thank-you` usin
 
 `python3 tests/browser_thank_you_check.py` checks the actual success redirect with a stubbed submission response, five failure paths, uncertain delivery, mobile/tablet/desktop layouts, reload, and reduced motion. It never writes to CRM. The existing form regression test intercepts only the final redirect so it can still verify form validation and responsive layout.
 
+## Homepage layout and booking menus
+
+`assets/js/homepage-layout.js` and `assets/css/homepage-layout.css` enhance the hero, existing statistics, and training diagram without rewriting the exported runtime. Statistics retain their original values and descriptions; metrics follow a slow upright orbit with viewport-triggered count-up, visible motion controls, offscreen/tab-hidden pausing, and a static reduced-motion layout. The customer-service branch supplements the existing three sales paths. `hero-image.css` retains first-paint mobile sizing and dashboard-canvas scale stabilization.
+
+`assets/js/accreditation.js` and `assets/css/accreditation.css` insert the four academy-supplied accreditation images before the company logo section. Use supplied artwork rather than generating or guessing certification marks.
+
+`assets/js/booking-menu.js` supplies the employee picker and shared viewport-aware positioning for employee and country menus. Menus use the popover top layer to avoid transformed-ancestor clipping, keep a gap from their inputs, and flip upward when needed. The original employee select remains the validated form/payload source. Browsers without popover support get an in-flow menu.
+
+`python3 tests/browser_homepage_layout_check.py` verifies exact copy, the four images, count-up, full-orbit collision-free geometry, pause/reduced motion, and training branches at 320/390/768/1440px. `python3 tests/browser_dropdown_check.py` verifies menu placement, viewport bounds, keyboard/pointer selection, and outside dismissal. These use Chromium debug port 9222 and never submit live CRM records.
+
 ## Homepage video
 
 The existing video frame immediately above the statistics is filled by `assets/js/homepage-video.js`, styled by `assets/css/homepage-video.css`. It keeps one YouTube player (`1xNjiL8OELY`) across Framer hydration, loading the IFrame API at 35% visibility. It autoplays muted inline, pauses offscreen or in a hidden tab, and respects manual pause. A play button handles blocked autoplay; errors provide a direct YouTube link. Coral outer shadows preserve the border glow. The homepage no longer requests the storage-backed MP4.

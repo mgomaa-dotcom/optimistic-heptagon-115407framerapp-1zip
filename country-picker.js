@@ -1,10 +1,13 @@
 /* Searchable, keyboard-accessible country selection inside the booking shadow root. */
+import { BookingMenu } from "./assets/js/booking-menu.js";
+
 export class CountryPicker {
   constructor(root, countries) {
     this.wrapper = root.querySelector(".country-picker");
     this.input = root.getElementById("booking-country-search");
     this.value = root.getElementById("booking-country");
     this.menu = root.getElementById("booking-country-list");
+    this.positioner = new BookingMenu(this.input, this.menu);
     this.announcement = root.getElementById("country-search-status");
     this.countries = [...countries].sort((a, b) =>
       a.code === "SA" ? -1 : b.code === "SA" ? 1 : a.name.localeCompare(b.name));
@@ -67,16 +70,13 @@ export class CountryPicker {
     }
     this.active = -1;
     this.input.removeAttribute("aria-activedescendant");
-    this.input.setAttribute("aria-expanded", "true");
-    this.menu.hidden = false;
+    this.positioner.open();
     this.announcement.textContent = this.filtered.length
       ? `${this.filtered.length} countries available` : "لا توجد نتائج.";
   }
 
   close() {
-    this.menu.hidden = true;
-    this.input.setAttribute("aria-expanded", "false");
-    this.input.removeAttribute("aria-activedescendant");
+    this.positioner.close();
     this.active = -1;
   }
 

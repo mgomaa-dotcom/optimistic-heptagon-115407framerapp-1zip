@@ -1,4 +1,5 @@
 import { CountryPicker } from "./country-picker.js";
+import { EmployeePicker } from "./assets/js/booking-menu.js";
 
 const englishDigits = (value) => value.replace(/[٠-٩۰-۹]/g, (digit) =>
   String(digit.charCodeAt(0) - (digit.charCodeAt(0) <= 0x669 ? 0x660 : 0x6f0)));
@@ -39,10 +40,15 @@ class MasteryBookingForm extends HTMLElement {
           <p class="field-error" id="error-email"></p>
         </div>
         <div class="form-field">
-          <label for="booking-employees">عدد الموظفين <span aria-hidden="true">*</span></label>
-          <select id="booking-employees" name="employees" class="numeric-input" lang="en" required disabled>
+          <label id="booking-employees-label" for="booking-employees-trigger">عدد الموظفين <span aria-hidden="true">*</span></label>
+          <button type="button" id="booking-employees-trigger" class="employee-trigger numeric-input" role="combobox"
+            aria-haspopup="listbox" aria-expanded="false" aria-required="true"
+            aria-controls="booking-employees-list" aria-labelledby="booking-employees-label booking-employees-trigger"
+            aria-describedby="error-employees" disabled>جارٍ تحميل الخيارات…</button>
+          <select id="booking-employees" name="employees" class="sr-only" lang="en" tabindex="-1" aria-hidden="true" required disabled>
             <option value="">جارٍ تحميل الخيارات…</option>
           </select>
+          <div id="booking-employees-list" class="employee-menu" role="listbox" aria-label="عدد الموظفين" hidden></div>
           <p class="field-error" id="error-employees"></p>
         </div>
         <div class="form-field">
@@ -80,6 +86,7 @@ class MasteryBookingForm extends HTMLElement {
         <p class="privacy">سنستخدم بياناتك للتواصل معك بخصوص استشارتك.</p>
       </form>`;
     this.form = root.querySelector("form");
+    this.employeePicker = new EmployeePicker(root);
     this.submitButton = root.getElementById("booking-submit");
     this.status = root.getElementById("booking-status");
     this.key = crypto.randomUUID();
@@ -170,6 +177,7 @@ class MasteryBookingForm extends HTMLElement {
     delete payload.countrySearch;
     payload.fullName = payload.fullName.trim().replace(/\s+/gu, " ");
     this.countryPicker.close();
+    this.employeePicker.close();
     this.busy = true;
     const controls = [...this.form.querySelectorAll("input, select")];
     controls.forEach((field) => { field.disabled = true; });

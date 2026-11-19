@@ -43,7 +43,7 @@
   .framer-firmG .framer-1t8c3mm,
   .framer-firmG .framer-1i97owk,
   .framer-firmG .framer-1wnd895 {
-    animation: hero-card-float 7s ease-in-out infinite alternate;
+    animation: hero-card-float 8s ease-in-out infinite alternate;
   }
   .framer-firmG .framer-1t8c3mm {
     animation-duration: 8s;
@@ -57,6 +57,16 @@
     animation-duration: 8.5s;
     animation-delay: -3s;
   }
+}
+.framer-firmG .framer-9nhah2[data-ma-motion-paused="true"] .framer-1dvqzfw,
+.framer-firmG .framer-9nhah2[data-ma-motion-paused="true"] .framer-1t8c3mm,
+.framer-firmG .framer-9nhah2[data-ma-motion-paused="true"] .framer-1i97owk,
+.framer-firmG .framer-9nhah2[data-ma-motion-paused="true"] .framer-1wnd895,
+.framer-firmG .framer-9nhah2[data-ma-motion-hidden="true"] .framer-1dvqzfw,
+.framer-firmG .framer-9nhah2[data-ma-motion-hidden="true"] .framer-1t8c3mm,
+.framer-firmG .framer-9nhah2[data-ma-motion-hidden="true"] .framer-1i97owk,
+.framer-firmG .framer-9nhah2[data-ma-motion-hidden="true"] .framer-1wnd895 {
+  animation-play-state: paused !important;
 }
 @keyframes hero-card-float {
   from { translate: 0 0; }

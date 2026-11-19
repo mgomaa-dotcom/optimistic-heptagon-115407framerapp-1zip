@@ -14,3 +14,9 @@ Framer exports can paint final artwork before the runtime resets its entrance st
 **Why:** The mobile hero was initially visible at desktop scale, then became nearly transparent and resized when hydration replayed its entrance.
 
 **How to apply:** Keep initial responsive geometry consistent with the hydrated state and avoid competing entrance controllers on already-visible artwork. Verify from first paint through hydration with animation-frame sampling; a settled screenshot alone cannot catch this. Sample nested visual canvases too: a stable outer frame does not prove its contents are stable. The dashboard's internal fit calculation briefly reverted to a different initial scale even after the surrounding hero was fixed.
+
+Runtime text reconciliation may mutate text nodes without replacing elements.
+
+**Why:** Requested hero copy could revert after appearing correct because a child-list-only observer did not see Framer's later text-node update.
+
+**How to apply:** When maintaining enhanced copy across hydration, observe character data selectively for the relevant heading. Exclude counters and other frequently changing content to avoid unnecessary reconciliation loops.
