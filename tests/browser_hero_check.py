@@ -19,10 +19,13 @@ function sampleHero() {
   if (hero) {
     const s = getComputedStyle(hero), r = hero.getBoundingClientRect();
     const p = getComputedStyle(hero.parentElement);
+    const dashboard = document.querySelector(
+      '.framer-1cu329x .framer-5s59wc-container > div > div');
     heroSamples.push({
       opacity: +s.opacity, transform: s.transform,
       width: r.width, height: r.height, left: r.left, right: r.right,
       parentTransform: p.transform,
+      dashboardTransform: dashboard && getComputedStyle(dashboard).transform,
       replacement: getComputedStyle(hero.querySelector('img')).content
     });
   }
@@ -47,11 +50,16 @@ for width in [320, 390, 768, 1440]:
         widths = [s["width"] for s in samples]
         assert max(widths) - min(widths) < 1, (min(widths), max(widths))
         assert all("hero-sales-team.webp" in s["replacement"] for s in samples)
+        dashboard_transforms = {s["dashboardTransform"] for s in samples
+                                if s["dashboardTransform"]}
+        assert dashboard_transforms == {
+            "matrix(0.377273, 0, 0, 0.377273, -500, -330)"
+        }, dashboard_transforms
         if width < 810:
             assert all(s["left"] >= -1 and s["right"] <= width + 1 for s in samples), samples
         print(json.dumps({"width": width, "reload": reload, "samples": len(samples),
                           "imageWidth": widths[-1], "noOpacityReset": True,
-                          "noResizeFlash": True}))
+                          "noResizeFlash": True, "dashboardScale": next(iter(dashboard_transforms))}))
 motion = browser.evaluate("""(() => {
   const cards = ['1dvqzfw','1t8c3mm','1i97owk','1wnd895'];
   return cards.map(c => {

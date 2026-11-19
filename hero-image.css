@@ -28,6 +28,14 @@
   }
 }
 
+/* The dashboard module briefly zooms its 1000×660 canvas while it hydrates,
+   then snaps back to its fit scale. Keep its intended fit (249 / 660) fixed. */
+.framer-firmG .framer-1cu329x .framer-5s59wc-container > div > div {
+  transform: translate(-50%, -50%) scale(0.377273) !important;
+  transform-origin: center center !important;
+  will-change: auto !important;
+}
+
 /* Slow, small movements replace competing spring entrances and fast loops.
    Individual translate does not interfere with Framer's transform writes. */
 @media (prefers-reduced-motion: no-preference) {

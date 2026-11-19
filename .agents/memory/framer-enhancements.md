@@ -13,4 +13,4 @@ Framer exports can paint final artwork before the runtime resets its entrance st
 
 **Why:** The mobile hero was initially visible at desktop scale, then became nearly transparent and resized when hydration replayed its entrance.
 
-**How to apply:** Keep initial responsive geometry consistent with the hydrated state and avoid competing entrance controllers on already-visible artwork. Verify from first paint through hydration with animation-frame sampling; a settled screenshot alone cannot catch this.
+**How to apply:** Keep initial responsive geometry consistent with the hydrated state and avoid competing entrance controllers on already-visible artwork. Verify from first paint through hydration with animation-frame sampling; a settled screenshot alone cannot catch this. Sample nested visual canvases too: a stable outer frame does not prove its contents are stable. The dashboard's internal fit calculation briefly reverted to a different initial scale even after the surrounding hero was fixed.
