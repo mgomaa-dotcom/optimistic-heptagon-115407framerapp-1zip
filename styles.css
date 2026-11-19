@@ -225,12 +225,8 @@ html body { background: rgb(255, 255, 255); }
 /* Sections retired from the homepage. Keep Framer's hydration tree intact,
    but remove their layout, mobile overflow, controls, and navigation targets. */
 #sitemap,
-#testimonials,
-#testimonials-quotes,
 #tracks .ma-track-controls,
-a[href$="#sitemap"],
-a[href$="#testimonials"],
-a[href$="#testimonials-quotes"] {
+a[href$="#sitemap"] {
     display: none !important;
 }
 
