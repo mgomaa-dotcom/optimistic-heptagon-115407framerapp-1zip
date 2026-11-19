@@ -11,6 +11,9 @@ from replit.object_storage._config import REPLIT_ADC
 BUCKET_ID = "replit-objstore-144e4ed6-28af-4673-a84b-9e265e957a44"
 VIDEO_OBJECT = "اعلان أكاديمية المبيعات - Main + SFX (2026-11-18 v2) - FINAL.mp4"
 CHUNK_SIZE = 1024 * 1024
+# Browsers often ask for bytes=0- (the entire file). Keep each partial response
+# small enough for the publishing proxy; the player requests subsequent ranges.
+MAX_RANGE_SIZE = 8 * 1024 * 1024
 _metadata = None
 _expires = 0
 _lock = threading.Lock()
@@ -131,6 +134,8 @@ def serve_video(handler, head=False):
         handler.send_header("Content-Length", "0")
         handler.end_headers()
         return
+    if range_header:
+        end = min(end, start + MAX_RANGE_SIZE - 1)
     reader = None
 
     def read_first_chunk():

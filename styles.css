@@ -222,6 +222,18 @@ html,body,#main{box-sizing:border-box;margin:0;padding:0}:root{-webkit-font-smoo
 
 html body { background: rgb(255, 255, 255); }
 
+/* Sections retired from the homepage. Keep Framer's hydration tree intact,
+   but remove their layout, mobile overflow, controls, and navigation targets. */
+#sitemap,
+#testimonials,
+#testimonials-quotes,
+#tracks .ma-track-controls,
+a[href$="#sitemap"],
+a[href$="#testimonials"],
+a[href$="#testimonials-quotes"] {
+    display: none !important;
+}
+
 @keyframes ab-a{0%{transform:translateX(-30%) rotate(-30deg)}50%{transform:translateX(160%) rotate(-12deg)}100%{transform:translateX(-30%) rotate(-30deg)}}
   @keyframes ab-b{0%{transform:translateX(40%) rotate(28deg) scale(1)}50%{transform:translateX(-260%) rotate(14deg) scale(1.2)}100%{transform:translateX(40%) rotate(28deg) scale(1)}}
   @keyframes ab-c{0%{transform:translate(-40%,0) scale(1);opacity:.5}50%{transform:translate(40%,-15%) scale(1.35);opacity:1}100%{transform:translate(-40%,0) scale(1);opacity:.5}}

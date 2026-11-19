@@ -13,9 +13,11 @@ from browser_form_check import CDP
 browser = CDP()
 browser.call("Runtime.enable")
 browser.call("Page.enable")
+browser.call("Network.enable")
+browser.call("Network.setCacheDisabled", {"cacheDisabled": True})
 browser.call("Page.bringToFront")
 browser.call("Page.navigate", {
-    "url": f"https://{os.environ['REPLIT_DEV_DOMAIN']}/",
+    "url": os.environ.get("VIDEO_TEST_BASE_URL", f"https://{os.environ['REPLIT_DEV_DOMAIN']}") + "/",
 })
 time.sleep(7)
 result = browser.evaluate("""(async () => {
@@ -80,4 +82,15 @@ for width in [390, 768, 1440]:
     print("Responsive video:", json.dumps(layout))
 errors = [event for event in browser.events if event.get("method") == "Runtime.exceptionThrown"]
 assert not errors, errors
+responses = [
+    event["params"]["response"] for event in browser.events
+    if event.get("method") == "Network.responseReceived"
+    and "/media/academy-introduction.mp4" in event["params"]["response"]["url"]
+]
+assert responses, "No media responses recorded"
+for response in responses:
+    headers = {key.lower(): value for key, value in response["headers"].items()}
+    assert response["status"] == 206, response
+    assert int(headers["content-length"]) <= 8 * 1024 * 1024, headers
+print("Playback/seek responses:", len(responses), "all partial and at most 8 MiB")
 browser.socket.close()

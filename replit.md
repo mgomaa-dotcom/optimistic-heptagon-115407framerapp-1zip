@@ -56,7 +56,9 @@ The existing video frame immediately above the statistics is filled by `assets/j
 
 `backend/media.py` serves only the explicitly selected object from the existing App Storage bucket at `/media/academy-introduction.mp4`. It uses Replit-managed authentication via the Python storage SDK's identity configuration and the underlying GCS client for bounded reads; credentials never reach the browser. HTTP GET ranges and HEAD support playback and seeking without loading the 350 MB object into memory or Git. Storage errors return 503; unknown media paths are not exposed. Dependencies are tracked in `pyproject.toml` and `uv.lock`.
 
-Run `python3 -m unittest discover -s tests -p 'test_*.py'` for backend checks. With Chromium debug port 9222 running, `python3 tests/browser_video_check.py` checks actual playback, seeking, hydration, poster, and responsive dimensions without creating CRM records.
+Ranged responses are capped at 8 MiB, including open-ended requests such as `bytes=0-`, with an accurate `Content-Range` for the returned segment. This avoids oversized responses through the publishing proxy; browsers request subsequent segments. Temporary storage lookup/read failures get one server-side retry and sanitized diagnostics, and the visible player retries network/source errors twice before showing the manual retry button.
+
+Run `python3 -m unittest discover -s tests -p 'test_*.py'` and `node tests/video_recovery_check.cjs` for backend/recovery checks. With Chromium debug port 9222 running, `python3 tests/browser_video_check.py` checks actual playback, seeking, hydration, poster, and responsive dimensions without creating CRM records. Set `VIDEO_TEST_BASE_URL` to a verified production URL to run that playback check against the published site.
 
 ## Homepage motion
 `assets/js/learning-enhancements.js` progressively enhances the sitemap, sales tracks, and methodology without rewriting the exported Framer bundle. `assets/css/learning-enhancements.css` scopes the layout changes to those sections. GSAP 3.13.0 is served locally from `assets/vendor/gsap.min.js`, with its license header retained.

@@ -16,6 +16,9 @@
   let manuallyPaused = false;
   let automaticPause = false;
   let playPending = false;
+  let recoveryAttempts = 0;
+  let recoveryTimer = null;
+  const recoveryDelays = [800, 2000];
   const pauseOffscreen = () => {
     if (!player.paused) {
       automaticPause = true;
@@ -25,6 +28,10 @@
   const syncPlayback = () => {
     if (!inView || document.hidden) {
       pauseOffscreen();
+      return;
+    }
+    if (player.error) {
+      scheduleRecovery();
       return;
     }
     if (manuallyPaused || player.ended || !player.paused || playPending) return;
@@ -38,7 +45,9 @@
   };
   player.addEventListener("pause", () => {
     if (automaticPause) automaticPause = false;
-    else if (inView && !document.hidden && !player.ended) manuallyPaused = true;
+    else if (inView && !document.hidden && !player.ended && !player.error) {
+      manuallyPaused = true;
+    }
   });
   player.addEventListener("play", () => {
     manuallyPaused = false;
@@ -60,14 +69,50 @@
   const retry = document.createElement("button");
   retry.type = "button";
   retry.textContent = "إعادة المحاولة";
-  retry.addEventListener("click", () => {
+  const reloadPlayer = () => {
+    manuallyPaused = false;
     error.hidden = true;
     player.load();
-    player.play().catch(() => { error.hidden = !player.error; });
+    // load() aborts any previous play promise.
+    playPending = false;
+    syncPlayback();
+  };
+  const scheduleRecovery = () => {
+    // Network/source errors can come from a temporary 503. Never loop forever
+    // or repeatedly retry decode errors, hidden tabs, or offscreen players.
+    if (recoveryTimer !== null || !inView || document.hidden) return;
+    if (![2, 4].includes(player.error?.code) ||
+        recoveryAttempts >= recoveryDelays.length) {
+      error.hidden = false;
+      return;
+    }
+    const delay = recoveryDelays[recoveryAttempts++];
+    error.hidden = true;
+    recoveryTimer = setTimeout(() => {
+      recoveryTimer = null;
+      if (!inView || document.hidden) {
+        error.hidden = false;
+        return;
+      }
+      reloadPlayer();
+    }, delay);
+  };
+  retry.addEventListener("click", () => {
+    if (recoveryTimer !== null) clearTimeout(recoveryTimer);
+    recoveryTimer = null;
+    recoveryAttempts = 0;
+    reloadPlayer();
   });
   error.append(message, retry);
-  player.addEventListener("error", () => { error.hidden = false; });
-  player.addEventListener("loadeddata", () => { error.hidden = true; });
+  player.addEventListener("error", () => {
+    error.hidden = false;
+    scheduleRecovery();
+  });
+  player.addEventListener("loadeddata", () => {
+    if (recoveryTimer !== null) clearTimeout(recoveryTimer);
+    recoveryTimer = null;
+    error.hidden = true;
+  });
 
   const mount = () => {
     const frame = document.querySelector('[data-framer-name="إطار الفيديو"]');

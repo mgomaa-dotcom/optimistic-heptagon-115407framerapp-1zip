@@ -1,3 +1,4 @@
 - [Country API quirks](country-api.md) — REST Countries v5 needs an explicit client User-Agent and includes countries without ISO codes.
 - [Framer enhancement lifecycle](framer-enhancements.md) — hydration can replace entire sections; reconnect enhancements and keep observer writes idempotent.
 - [Booking proxy trust](booking-proxy-trust.md) — prefer shared-proxy throttling over accepting unverified forwarded client identities.
+- [Published video diagnosis](published-video-diagnosis.md) — successful HEAD and tiny range probes can conceal failures on the browser's open-ended request.
