@@ -14,6 +14,7 @@ CHUNK_SIZE = 1024 * 1024
 _metadata = None
 _expires = 0
 _lock = threading.Lock()
+_RETRYABLE_STATUSES = {408, 429, 500, 502, 503, 504}
 
 
 def video_blob():
@@ -33,6 +34,61 @@ def video_blob():
             _metadata = blob
             _expires = time.monotonic() + 60
         return _metadata
+
+
+def _clear_video_metadata():
+    global _metadata, _expires
+    with _lock:
+        _metadata = None
+        _expires = 0
+
+
+def _status_code(error):
+    for name in ("status_code", "code"):
+        value = getattr(error, name, None)
+        if callable(value):
+            try:
+                value = value()
+            except Exception:
+                continue
+        if isinstance(value, int) and 100 <= value <= 599:
+            return value
+        if isinstance(value, str) and value.isdigit():
+            value = int(value)
+            if 100 <= value <= 599:
+                return value
+    return None
+
+
+def _log_video_failure(stage, error):
+    # Never log exception text: provider errors can contain sensitive details.
+    status = _status_code(error)
+    suffix = f", status={status}" if status is not None else ""
+    print(
+        f"Homepage video {stage} failed "
+        f"(type={type(error).__name__}{suffix})",
+        flush=True,
+    )
+
+
+def _retryable(error):
+    status = _status_code(error)
+    return status in _RETRYABLE_STATUSES or isinstance(
+        error, (TimeoutError, ConnectionError, OSError)
+    )
+
+
+def _retry_once(stage, operation, *, refresh_metadata=False):
+    for attempt in range(2):
+        try:
+            return operation()
+        except Exception as error:
+            _log_video_failure(stage, error)
+            if attempt or not _retryable(error):
+                raise
+            if refresh_metadata:
+                _clear_video_metadata()
+            time.sleep(0.2)
 
 
 def byte_range(header, size):
@@ -58,7 +114,9 @@ def byte_range(header, size):
 def serve_video(handler, head=False):
     """Stream bounded chunks, with HTTP Range for browser seeking/mobile playback."""
     try:
-        blob = video_blob()
+        blob = _retry_once(
+            "metadata lookup", video_blob, refresh_metadata=True
+        )
     except Exception:
         handler.send_json(503, {"error": "الفيديو غير متاح مؤقتاً. يرجى المحاولة مجدداً."})
         return
@@ -74,15 +132,29 @@ def serve_video(handler, head=False):
         handler.end_headers()
         return
     reader = None
+
+    def read_first_chunk():
+        current_reader = video_blob().open(
+            "rb", chunk_size=CHUNK_SIZE, timeout=30
+        )
+        try:
+            current_reader.seek(start)
+            chunk = current_reader.read(min(CHUNK_SIZE, remaining))
+            if not chunk:
+                raise OSError("Empty video")
+            return current_reader, chunk
+        except Exception:
+            current_reader.close()
+            raise
+
     try:
-        first_chunk = b""
         remaining = end - start + 1
         if not head:
-            reader = blob.open("rb", chunk_size=CHUNK_SIZE, timeout=30)
-            reader.seek(start)
-            first_chunk = reader.read(min(CHUNK_SIZE, remaining))
-            if not first_chunk:
-                raise OSError("Empty video")
+            reader, first_chunk = _retry_once(
+                "initial range read", read_first_chunk, refresh_metadata=True
+            )
+        else:
+            first_chunk = b""
     except Exception:
         if reader:
             reader.close()
@@ -108,10 +180,10 @@ def serve_video(handler, head=False):
                 chunk = reader.read(min(CHUNK_SIZE, remaining))
     except (BrokenPipeError, ConnectionResetError):
         pass  # Normal when a viewer seeks or leaves the page.
-    except Exception:
+    except Exception as error:
         # Headers have already been sent: terminate, never append JSON to MP4.
+        _log_video_failure("stream", error)
         handler.close_connection = True
-        print("Video stream interrupted.", flush=True)
     finally:
         if reader:
             reader.close()
