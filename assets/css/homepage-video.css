@@ -11,12 +11,23 @@
     0 24px 90px rgba(255, 101, 85, 0.12);
 }
 .academy-video {
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;
   aspect-ratio: 16 / 9;
   object-fit: contain;
   border-radius: inherit;
+}
+.academy-video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+}
+.academy-video-error a {
+  color: #ffb4a9;
 }
 .academy-video-error:not([hidden]) {
   position: absolute;
