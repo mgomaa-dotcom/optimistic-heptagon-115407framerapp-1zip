@@ -62,7 +62,7 @@
     const observer = new MutationObserver(() => {
       if (scheduled) return;
       scheduled = true;
-      requestAnimationFrame(reconcile);
+      queueMicrotask(reconcile);
     });
     observer.observe(document.body, { childList: true, subtree: true });
     reconcile();

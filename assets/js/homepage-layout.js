@@ -134,7 +134,8 @@
       }
       orbit.append(stat);
     });
-    orbit.prepend(makeMasteryMark());
+    const masteryMark = makeMasteryMark();
+    orbit.prepend(masteryMark);
     stage.classList.add("ma-number-stage");
     stage.dataset.maOrbitMounted = "true";
     stage.dataset.maMotionStatic = "true";
@@ -311,6 +312,18 @@
     };
     cleanup.control = motionButton;
     cleanup.stage = stage;
+    cleanup.restore = () => {
+      // Responsive hydration can remove individual original counter nodes
+      // while retaining the stage itself. Reconnect retained nodes before paint
+      // rather than resetting the orbit or restarting their count-up.
+      if (orbit.parentElement !== stage) stage.append(orbit);
+      if (masteryMark.parentElement !== orbit) orbit.prepend(masteryMark);
+      stats.forEach(stat => {
+        if (stat.parentElement !== orbit) orbit.append(stat);
+      });
+      if (motionButton.parentElement !== container) container.append(motionButton);
+      if (details.parentElement !== container) container.append(details);
+    };
     return cleanup;
   }
 
@@ -380,17 +393,24 @@
     svg.setAttribute("viewBox", "0 0 340 488");
     svg.setAttribute("height", "488");
     const branchPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    branchPath.setAttribute("d", "M314 204 C314 285 278 302 278 365 L278 436 L232 436");
+    branchPath.setAttribute("d", "M314 212 L314 436 L240 436");
     branchPath.classList.add("ma-service-branch-path");
     branchPath.setAttribute("aria-hidden", "true");
-    svg.append(branchPath);
+    const branchFlow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    branchFlow.setAttribute("d", "M314 212 L314 436 L240 436");
+    branchFlow.classList.add("ma-service-branch-flow");
+    branchFlow.setAttribute("aria-hidden", "true");
+    branchFlow.style.cssText = "opacity:.5;animation:2.4s linear 1.4s infinite tp-flow";
+    const branchLink = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    branchLink.setAttribute("d", "M116 436 L112 436");
+    branchLink.classList.add("ma-service-branch-link");
+    branchLink.setAttribute("aria-hidden", "true");
+    svg.append(branchPath, branchFlow, branchLink);
 
     const serviceTile = document.createElement("div");
     serviceTile.className = "ma-service-tile";
     serviceTile.setAttribute("aria-hidden", "true");
-    serviceTile.innerHTML = '<svg viewBox="0 0 48 48" focusable="false"><path d="M9 11.5h30a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H22l-8 5v-5H9a4 4 0 0 1-4-4v-16a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" stroke-width="2"></path><path d="M14 22h20M14 28h13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg><span>تدريب الخدمة</span>';
-    serviceTile.style.cssText = "position:absolute;left:0;top:384px;width:104px;height:104px;box-sizing:border-box;padding:8px;border:1px solid rgba(255,101,85,.28);border-radius:16px;background:#19191b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#ff9387;font:12px/1.4 'Swissra-Normal ☞','Swissra-Normal','IBM Plex Sans Arabic',sans-serif;direction:rtl;text-align:center";
-    serviceTile.querySelector("svg").style.cssText = "width:34px;height:34px;color:#ff6555";
+    serviceTile.innerHTML = '<div class="ma-service-tile__art"><svg class="ma-service-icon" viewBox="0 0 94 58" focusable="false" aria-hidden="true"><path d="M31 15.5h32a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H45l-8 5v-5h-6a4 4 0 0 1-4-4v-15a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" stroke-width="1.8"></path><path d="M38 25h18M38 31h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></div><div class="ma-service-tile__copy"><div>التواصل الفعّال</div><div>كسب ولاء العملاء</div></div>';
     const label = document.createElement("div");
     label.className = "ma-service-branch";
     label.textContent = SERVICE_TITLE;
@@ -471,7 +491,10 @@
     scheduled = false;
     addHeroEnhancements();
     const hero = document.querySelector(".framer-firmG .framer-9nhah2");
-    if (hero && (!activeHeroMotion || activeHeroMotion.hero !== hero || !activeHeroMotion.cleanup.control.isConnected)) {
+    // The small script runs in the head so completed sections are enhanced in
+    // the parser's rendering turn. Never move nodes out of an unfinished section.
+    const parsed = section => document.readyState !== "loading" || Boolean(section?.nextElementSibling);
+    if (hero && parsed(hero) && (!activeHeroMotion || activeHeroMotion.hero !== hero || !activeHeroMotion.cleanup.control.isConnected)) {
       activeHeroMotion?.cleanup();
       const cleanup = mountHeroMotion(hero);
       activeHeroMotion = cleanup ? { hero, cleanup } : null;
@@ -481,10 +504,11 @@
     }
     const numbers = document.getElementById("numbers");
     const numberStage = numbers?.querySelector(".framer-10lv4ot-container > div");
+    if (numberStage && activeNumbers?.stage === numberStage) activeNumbers.cleanup.restore();
     const numberMounted = numberStage?.querySelector(".ma-number-orbit") &&
       numbers.querySelector(".ma-number-motion-control") &&
       numberStage.querySelector(".ma-number-mark");
-    if (numberStage && (!activeNumbers || activeNumbers.stage !== numberStage || !numberMounted)) {
+    if (numberStage && parsed(numbers) && (!activeNumbers || activeNumbers.stage !== numberStage || !numberMounted)) {
       activeNumbers?.cleanup();
       const cleanup = mountNumberOrbit(numbers);
       activeNumbers = cleanup ? { stage: numberStage, cleanup } : null;
@@ -493,7 +517,7 @@
       activeNumbers = null;
     }
     const tracks = document.getElementById("tracks");
-    if (tracks) {
+    if (tracks && parsed(tracks)) {
       buildServiceBranch(tracks);
       if (!activeTracks || activeTracks.section !== tracks || !activeTracks.cleanup.control.isConnected) {
         activeTracks?.cleanup();
@@ -509,7 +533,7 @@
   function schedule() {
     if (scheduled) return;
     scheduled = true;
-    requestAnimationFrame(reconcile);
+    queueMicrotask(reconcile);
   }
 
   const observer = new MutationObserver(records => {
@@ -522,7 +546,7 @@
     });
     if (relevant) schedule();
   });
-  observer.observe(document.body, { childList: true, characterData: true, subtree: true });
+  observer.observe(document.documentElement, { childList: true, characterData: true, subtree: true });
   document.addEventListener("DOMContentLoaded", schedule, { once: true });
   window.addEventListener("pageshow", schedule);
   if (reduceMotion.addEventListener) {

@@ -1,0 +1,154 @@
+/* Local, consistent Arabic typography, loaded before any page content.
+   Optional display prevents a late font swap on a slow or failed connection;
+   preloads make the real face available for the normal first paint. */
+@font-face {
+  font-family: "Mastery Arabic";
+  src: url("../fonts/ibm-plex-sans-arabic-regular-1.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: optional;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+FB50-FDFF, U+FE70-FEFF;
+}
+@font-face {
+  font-family: "Mastery Arabic";
+  src: url("../fonts/ibm-plex-sans-arabic-semibold-1.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500 900;
+  font-display: optional;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+FB50-FDFF, U+FE70-FEFF;
+}
+@font-face {
+  font-family: "Mastery Arabic";
+  src: url("../fonts/ibm-plex-sans-arabic-regular-4.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: optional;
+  unicode-range: U+0000-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "Mastery Arabic";
+  src: url("../fonts/ibm-plex-sans-arabic-semibold-4.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500 900;
+  font-display: optional;
+  unicode-range: U+0000-00FF, U+2000-206F;
+}
+html:root {
+  --ma-arabic: "Mastery Arabic", "Tahoma", sans-serif;
+  --ma-arabic-bold: "Mastery Arabic", "Tahoma", sans-serif;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  font-family: var(--ma-arabic);
+  font-synthesis: none;
+}
+#main :is(h1, h2, h3, h4, p, span, label, input, select, textarea, button, a, li, figcaption),
+#main [style*="font-family"],
+.country-menu, .employee-menu, .country-menu *, .employee-menu * {
+  font-family: var(--ma-arabic) !important;
+  letter-spacing: normal;
+}
+#main :is(h1, h2, h3, h4, strong),
+#main [style*="Swissra-Bold"],
+#main [style*="Swissra-Medium"],
+#main .ma-hero-kicker {
+  font-weight: 600 !important;
+}
+#main .numeric-input,
+#main .ma-number-value,
+#main input[type="email"],
+#main input[type="url"] {
+  font-family: Arial, sans-serif !important;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+/* Exported reveal controllers must not hide already-painted section content
+   when Framer hydrates it. Keep continuous decorative/icon motion intact. */
+#main :is(#numbers .framer-ppco5e, #sitemap, #tracks, #method, #features, #testimonials) [data-framer-appear-id],
+#main #numbers .framer-ppco5e {
+  opacity: 1 !important;
+  transform: none !important;
+}
+/* Framer injects breakpoint-specific rules after hydration. Explicit grid
+   gaps/rows keep the already-painted arrangement identical to that first view. */
+.framer-firmG .framer-quxnty {
+  column-gap: clamp(16px, 4vw, 64px) !important;
+  row-gap: clamp(10px, 1.8vw, 24px) !important;
+  grid-template-rows: auto minmax(0, 1fr) 40px !important;
+}
+.framer-firmG .framer-7g44gx :is(p, span) {
+  font-size: clamp(15px, 1.2vw, 17px) !important;
+  line-height: 1.8 !important;
+}
+/* The exported diagram's ResizeObserver starts with desktop dimensions.
+   Reserve the real CSS scale, including its fourth row, before it measures. */
+#tracks { --ma-track-scale: 1.08; }
+#tracks .framer-iln5sx-container > div {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 40px !important;
+}
+#tracks .framer-iln5sx-container > div > div:first-of-type {
+  flex: 0 0 34% !important;
+  text-align: right !important;
+}
+#tracks .framer-iln5sx-container > div > div:last-child { flex: 1 1 0 !important; }
+#tracks h2 {
+  margin: 0 !important;
+  font-size: clamp(20px, 2vw, 24px) !important;
+  line-height: 1.5 !important;
+}
+#tracks p {
+  margin: 12px 0 0 !important;
+  max-width: 440px !important;
+  font-size: clamp(14px, 1.2vw, 16px) !important;
+  line-height: 1.8 !important;
+}
+#numbers h2 {
+  font-size: 24px !important;
+  line-height: 1.45 !important;
+}
+/* The exported number heading has only one SSR variant. Do not temporarily
+   hide it while Framer rewrites its breakpoint classes. */
+#numbers .ssr-variant { display: contents !important; }
+#tracks .framer-iln5sx-container div:has(> div > svg[viewBox^="0 0 340 "]) {
+  height: calc(488px * var(--ma-track-scale) + 40px) !important;
+}
+#tracks .framer-iln5sx-container div > svg[viewBox="0 0 340 360"] {
+  height: 360px !important;
+}
+@media (max-width: 1199px) {
+  #tracks .framer-iln5sx-container > div {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 32px !important;
+  }
+  #tracks .framer-iln5sx-container > div > div:first-of-type {
+    flex: none !important;
+    text-align: center !important;
+  }
+  #tracks .framer-iln5sx-container > div > div:last-child { flex: none !important; }
+  #tracks p { max-width: 600px !important; margin-inline: auto !important; }
+}
+@media (max-width: 809.98px) {
+  #numbers h2 { font-size: 20px !important; }
+  .framer-firmG .framer-quxnty {
+    column-gap: 16px !important;
+    row-gap: 6px !important;
+    grid-template-rows: auto auto 370px 40px !important;
+  }
+  .framer-firmG .framer-1blmele {
+    box-sizing: border-box;
+    height: 56px !important;
+    min-height: 56px;
+  }
+  #tracks { --ma-track-scale: .94; }
+}
+@media (max-width: 520px) {
+  #tracks { --ma-track-scale: .82; }
+}
+@media (max-width: 360px) {
+  #tracks { --ma-track-scale: .72; }
+}

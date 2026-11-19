@@ -45,6 +45,6 @@
   new MutationObserver(() => {
     if (scheduled) return;
     scheduled = true;
-    requestAnimationFrame(mount);
-  }).observe(document.body, { childList: true, subtree: true });
+    queueMicrotask(mount);
+  }).observe(document.documentElement, { childList: true, subtree: true });
 })();

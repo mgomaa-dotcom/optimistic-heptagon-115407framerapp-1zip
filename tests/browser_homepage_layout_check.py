@@ -23,7 +23,14 @@ for width in [320, 390, 768, 1440]:
             'من استراتيجيات الإقناع والتفاوض الي اغلاق الصفقات و كسب ولاء العملاء'
         )"""):
             break
-    time.sleep(1)
+    # The enhanced UI is now present before first paint, not just after the
+    # asynchronous Framer bundle finishes. Wait for that bundle before holding
+    # long-lived DOM references; the dedicated stability check samples startup.
+    for _ in range(80):
+        if browser.evaluate("document.readyState === 'complete'"):
+            break
+        time.sleep(.1)
+    time.sleep(.6)
     result = browser.evaluate("""(async () => {
       const assert = (ok, message) => { if (!ok) throw Error(message); };
       const wait = ms => new Promise(r => setTimeout(r, ms));

@@ -20,3 +20,9 @@ Runtime text reconciliation may mutate text nodes without replacing elements.
 **Why:** Requested hero copy could revert after appearing correct because a child-list-only observer did not see Framer's later text-node update.
 
 **How to apply:** When maintaining enhanced copy across hydration, observe character data selectively for the relevant heading. Exclude counters and other frequently changing content to avoid unnecessary reconciliation loops.
+
+Responsive RichText boundaries can temporarily remove headings and descriptions for multiple painted frames while the surrounding section remains mounted.
+
+**Why:** Correct font preloads, early layout styles, and same-turn reconciliation removed size changes but did not prevent a brief empty hero: the live text block itself was absent during responsive hydration.
+
+**How to apply:** Retain a last-known text-only block while its live counterpart is absent, remove that fallback immediately when the original returns, and keep both layouts identical. Validate missing-node frames as well as dimensions. Early enhanced content is not proof that Framer has finished loading; interaction tests holding DOM references should wait for load, while separate frame-sampling checks cover startup.

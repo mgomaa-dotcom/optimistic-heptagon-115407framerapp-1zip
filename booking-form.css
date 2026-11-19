@@ -3,7 +3,7 @@
   width: 100%;
   max-width: 100%;
   color: #28282c;
-  font-family: "Swissra-Normal ☞", sans-serif;
+  font-family: var(--ma-arabic, "Mastery Arabic", Tahoma, sans-serif);
   text-align: right;
 }
 * { box-sizing: border-box; }
@@ -42,7 +42,7 @@ input, select {
   font-size: 13px;
 }
 input::placeholder { color: #7d7d85; }
-select { font-family: "Swissra-Normal ☞", "Noto Color Emoji", sans-serif; }
+select { font-family: var(--ma-arabic, "Mastery Arabic", Tahoma, sans-serif); }
 input:focus, select:focus { outline: 2px solid #ff6555; outline-offset: 2px; }
 [aria-invalid="true"] { border-color: #b53326; }
 .numeric-input { font-family: Arial, sans-serif; font-variant-numeric: lining-nums tabular-nums; }
@@ -62,7 +62,7 @@ input:focus, select:focus { outline: 2px solid #ff6555; outline-offset: 2px; }
   border-radius: 14px;
   box-shadow: 0 12px 30px #0002;
   color: #28282c;
-  font-family: "Swissra-Normal ☞", sans-serif;
+  font-family: var(--ma-arabic, "Mastery Arabic", Tahoma, sans-serif);
 }
 .country-menu::backdrop, .employee-menu::backdrop { background: transparent; }
 .country-menu.menu-in-flow, .employee-menu.menu-in-flow {
