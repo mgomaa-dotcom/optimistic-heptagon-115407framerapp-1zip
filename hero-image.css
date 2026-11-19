@@ -2,3 +2,64 @@
 .framer-1clr2fg img {
   content: url("assets/images/hero-sales-team.webp");
 }
+
+/* The export paints its final state, then Framer replays hidden entrance
+   states during hydration. Keep the artwork stable through both renders. */
+.framer-firmG .framer-1346mgz [data-framer-appear-id] {
+  opacity: 1 !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Match the hydrated mobile scale before JavaScript runs. */
+@media (max-width: 809.98px) {
+  .framer-firmG .framer-1346mgz {
+    transform: scale(0.6) !important;
+  }
+}
+@media (max-width: 374px) {
+  .framer-firmG .framer-1346mgz {
+    transform: scale(0.55) !important;
+  }
+}
+@media (max-width: 339px) {
+  .framer-firmG .framer-1346mgz {
+    transform: scale(0.5) !important;
+  }
+}
+
+/* Slow, small movements replace competing spring entrances and fast loops.
+   Individual translate does not interfere with Framer's transform writes. */
+@media (prefers-reduced-motion: no-preference) {
+  .framer-firmG .framer-1dvqzfw,
+  .framer-firmG .framer-1t8c3mm,
+  .framer-firmG .framer-1i97owk,
+  .framer-firmG .framer-1wnd895 {
+    animation: hero-card-float 7s ease-in-out infinite alternate;
+  }
+  .framer-firmG .framer-1t8c3mm {
+    animation-duration: 8s;
+    animation-delay: -2s;
+  }
+  .framer-firmG .framer-1i97owk {
+    animation-duration: 9s;
+    animation-delay: -4s;
+  }
+  .framer-firmG .framer-1wnd895 {
+    animation-duration: 8.5s;
+    animation-delay: -3s;
+  }
+}
+@keyframes hero-card-float {
+  from { translate: 0 0; }
+  to { translate: 0 -6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .framer-firmG .framer-1346mgz *,
+  .framer-firmG .framer-1346mgz *::before,
+  .framer-firmG .framer-1346mgz *::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
