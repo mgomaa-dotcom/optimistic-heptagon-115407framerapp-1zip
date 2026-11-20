@@ -61,6 +61,11 @@
           iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
           player.mute();
           syncPlayback();
+          if (playWithSound) {
+            playWithSound = false;
+            player.unMute();
+            player.playVideo();
+          }
         },
         onStateChange: event => {
           if (event.data === 1) {
@@ -96,6 +101,20 @@
     script.onerror = () => showNotice("تعذّر تحميل الفيديو. شاهده على YouTube.", false);
     document.head.append(script);
   };
+  // Landing page "watch" button: start (or restart) playback with sound.
+  let playWithSound = false;
+  document.addEventListener("ma:video-play", () => {
+    manuallyPaused = false;
+    ended = false;
+    notice.hidden = true;
+    if (ready) {
+      player.unMute();
+      player.playVideo();
+    } else {
+      playWithSound = true;
+      load();
+    }
+  });
   play.addEventListener("click", () => {
     manuallyPaused = false;
     ended = false;

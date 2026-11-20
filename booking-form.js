@@ -11,7 +11,7 @@ class MasteryBookingForm extends HTMLElement {
     const root = this.attachShadow({ mode: "open" });
     root.innerHTML = `
       <link rel="stylesheet" href="/booking-form.css">
-      <form class="consultation-form" dir="rtl" lang="ar" aria-label="احجز استشارتك المجانية">
+      <form class="consultation-form" dir="rtl" lang="ar" aria-label="احجز جلسة التشخيص المجانية">
         <p class="required-note">الحقول المعلّمة بـ <span aria-hidden="true">*</span> مطلوبة.</p>
         <div class="form-field">
           <label for="booking-company">اسم الشركة <span aria-hidden="true">*</span></label>
@@ -81,7 +81,7 @@ class MasteryBookingForm extends HTMLElement {
         </div>
         <p id="booking-options-status" class="status" role="status" aria-live="polite"></p>
         <button type="button" id="booking-retry" class="secondary" hidden>إعادة تحميل الخيارات</button>
-        <button type="submit" id="booking-submit" disabled>احجز استشارتك المجانية</button>
+        <button type="submit" id="booking-submit" disabled>احجز جلسة التشخيص المجانية</button>
         <p id="booking-status" class="status" role="status" aria-live="polite" tabindex="-1"></p>
         <p class="privacy">سنستخدم بياناتك للتواصل معك بخصوص استشارتك.</p>
       </form>`;
@@ -226,7 +226,7 @@ class MasteryBookingForm extends HTMLElement {
       if (!completed) {
         controls.forEach((field) => { field.disabled = false; });
         this.submitButton.disabled = false;
-        this.submitButton.textContent = "احجز استشارتك المجانية";
+        this.submitButton.textContent = "احجز جلسة التشخيص المجانية";
       }
     }
   }
@@ -235,6 +235,13 @@ class MasteryBookingForm extends HTMLElement {
 customElements.define("mastery-booking-form", MasteryBookingForm);
 const bookingForm = document.createElement("mastery-booking-form");
 function mountBookingForm() {
+  // Hand-written landing page: mount into its slot.
+  const slot = document.querySelector("[data-booking-slot]");
+  if (slot) {
+    if (bookingForm.parentElement !== slot) slot.append(bookingForm);
+    return;
+  }
+  // Legacy Framer export: sit beside (and hide) the exported form.
   const original = document.querySelector('form[data-framer-name="Booking Form"]');
   if (!original) return;
   if (bookingForm.previousElementSibling !== original) original.after(bookingForm);

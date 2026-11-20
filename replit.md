@@ -1,7 +1,26 @@
 # Mastery Academy imported website
 
 ## Project
-This is an exported Framer website with a small Python backend for the consultation form. Keep the existing HTML, CSS, JavaScript modules, and asset folders in place. Preserve homepage content and design outside the requested form changes.
+The homepage (`index.html`) is a hand-written static page built from `README copy.md` (copy dated 19 Nov 2026). It replaces the original Framer export, which is kept unserved as `index.framer.html`. A small Python backend handles the consultation form.
+
+## Landing page (Nov 2026 rebuild)
+- `index.html`: all sections in README order. Section ids are `hero`, `clients`, `problem`, `video`, `how`, `tracks`, `ai`, `reports`, `success`, `trainers`, `pricing`, `faq` and `booking`. There is no Framer runtime.
+- `assets/css/landing.css`: tokens (coral `#FF6555`, ink `#0B0B0C`), layout, responsive rules, reduced-motion rules.
+- `assets/js/landing.js`: interactions that work without animation (nav menu, FAQ accordion, track builder, pricing matrix toggle, video button, marquee clone). It calls optional `window.MA.*` hooks.
+- `assets/js/landing-motion.js` handles all motion:
+  - **GSAP 3.13 + ScrollTrigger:** hero timeline, scroll reveals, pinned "how we work" steps on desktop, scrubbed video band, counters, logo marquee.
+  - **Motion 11.18 (vanilla Framer Motion):** springs for the nav, buttons, card lift, accordion, track builder, MCP chat typing, and the WhatsApp button.
+  - Vendored files: `assets/vendor/{gsap.min.js,ScrollTrigger.min.js,motion.js}`.
+- **Content stays visible:** `html.motion-ok` (set in `<head>`) hides `[data-reveal]` and `[data-hero]` until animated. A 2.5 s failsafe removes it if motion never starts. Reduced motion skips all animation.
+- **Placeholders:** copy still awaiting confirmation (README `[brackets]`) is rendered as `<mark class="ph">`, a dashed coral outline. List them with `grep -n 'class="ph"' index.html` and replace each with confirmed text before launch.
+- **Booking form:** `booking-form.js` mounts into `[data-booking-slot]`, and still falls back to the Framer form for `index.framer.html`. Fields and CRM mapping are unchanged. The submit label is «احجز جلسة التشخيص المجانية».
+- **Video:** `homepage-video.js` mounts into `.video-break__frame` (which keeps `data-framer-name="إطار الفيديو"`). The «شاهد الفيديو» button dispatches `ma:video-play`, which unmutes and plays the video.
+- **Test:** `python3 tests/browser_landing_check.py` checks section order, hidden content, overflow at 320/390/768/1440px, the single form in its slot, reduced motion, the FAQ, the builder and the matrix. It uses Chromium CDP on port 9222. Set `LANDING_TEST_BASE_URL` to test another host.
+- **Obsolete tests:** these sections describe the Framer export and no longer apply to the served homepage:
+  - "Homepage layout and booking menus"
+  - "Homepage motion"
+  - `browser_hero_check.py`, `browser_homepage_layout_check.py`, `browser_typography_stability_check.py` and `browser_motion_check.py`.
+  - `browser_form_check.py`, `browser_dropdown_check.py`, `browser_video_check.py` and `browser_thank_you_check.py` still apply.
 
 ## Run on Replit
 Use the **Start application** workflow. It runs:
@@ -17,8 +36,8 @@ Publishing uses `python3 server.py` as its run command. Choose the desired publi
 Do not open `index.html` through a `file://` URL: JavaScript modules and the form API require HTTP. Public file serving is restricted to website assets; credentials, backend sources, and the imported archive are not served.
 
 ## Editing
-- `index.html`: exported homepage markup
-- `styles.css`: exported styles
+- `index.html`: hand-written homepage (see "Landing page" above); `index.framer.html` is the old export
+- `styles.css`: exported Framer styles (used only by `index.framer.html`)
 - `assets/`: JavaScript modules, images, fonts, and other exported resources
 
 The export may retain links, embedded tools, and services hosted by Framer or other providers. Running the local site does not provide a Framer content-editing backend.

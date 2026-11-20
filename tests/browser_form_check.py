@@ -109,7 +109,9 @@ if __name__ == "__main__":
       assert(root.querySelectorAll('.form-field').length === 8, 'field grouping missing');
       assert(getComputedStyle(form).gridTemplateColumns.split(' ').length === 1, 'phone layout must use one column');
       assert(document.querySelectorAll('mastery-booking-form').length === 1, 'duplicate form');
-      assert(getComputedStyle(document.querySelector('form[data-framer-name="Booking Form"]')).display === 'none', 'old form visible');
+      const legacyForm = document.querySelector('form[data-framer-name="Booking Form"]');
+      assert(!legacyForm || getComputedStyle(legacyForm).display === 'none', 'old form visible');
+      assert(!document.querySelector('[data-booking-slot]') || host.parentElement.matches('[data-booking-slot]'), 'form outside booking slot');
       assert(host.countryPicker.countries.length > 250, 'country pagination incomplete');
       assert(host.countryPicker.countries[0].code === 'SA', 'Saudi Arabia must be first');
       assert(host.countryPicker.countries[0].flag.includes('🇸🇦'), 'country flag missing');
